@@ -1082,7 +1082,7 @@ FORMAT KELUARAN (satu baris per murid):
     // GANTI URL DI BAWAH INI dengan URL deployment Apps Script Anda
     // (hasil dari Deploy > Manage deployments, yang diakhiri /exec)
     // ============================================================
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwDUei5fE-XPeN-FZ4lZ7E5vIKqm7SgFpbXtlBU0klliYvUHyRC7cv1aJCUMYF0EkJY/exec';
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwVUcNLouu-o_S183lcjXku9nMhU0N45MXdImPA4QtJMIHTKJqy9PmwF_Jpd9jxeHAg/exec';
 
     function gasFetch(fn, args) {
       return fetch(GAS_API_URL, {
@@ -2372,11 +2372,20 @@ FORMAT KELUARAN (satu baris per murid):
             <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2.5 py-1 rounded-full">Soal ${idx + 1}</span>
           </div>
           <p class="text-sm text-slate-700 font-semibold leading-relaxed">${q}</p>
-          <textarea id="esai-answer-field-${idx}" oninput="autoExpandTextarea(this)" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium" placeholder="Tuliskan jawaban lengkap Anda untuk Soal ${idx + 1}..."></textarea>
+          <div class="relative">
+            <textarea id="esai-answer-field-${idx}" oninput="autoExpandTextarea(this)" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 pr-14 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium" placeholder="Tuliskan jawaban lengkap Anda untuk Soal ${idx + 1}..."></textarea>
+            <button type="button" id="mic-btn-${idx}" onclick="toggleVoiceInput(${idx})" title="Bicara untuk mengisi jawaban (Bahasa Indonesia)" class="absolute top-3 right-3 p-2 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-all shadow-sm">
+              <i data-lucide="mic" class="w-4 h-4" id="mic-icon-${idx}"></i>
+            </button>
+          </div>
+          <p id="mic-status-${idx}" class="hidden text-[11px] font-semibold text-rose-600 flex items-center gap-1.5">
+            <span class="w-2 h-2 bg-rose-600 rounded-full animate-pulse"></span> Sedang mendengarkan... bicara sekarang
+          </p>
           <div id="esai-feedback-soal-${idx}" class="hidden"></div>
         `;
         container.appendChild(card);
       });
+      lucide.createIcons();
     }
 
     function renderEssayFeedbackForSelectedStudent() {
@@ -3663,6 +3672,93 @@ FORMAT KELUARAN (satu baris per murid):
     function autoExpandTextarea(textarea) {
       textarea.style.height = 'auto';
       textarea.style.height = textarea.scrollHeight + 'px';
+    }
+
+    // ============================================================
+    // SUARA KE TEKS (SPEECH TO TEXT) — BAHASA INDONESIA
+    // Menggunakan Web Speech API bawaan browser (webkitSpeechRecognition).
+    // ============================================================
+    let activeSpeechRecognition = null;
+    let activeSpeechQuestionIdx = null;
+
+    function isSpeechRecognitionSupported() {
+      return ('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window);
+    }
+
+    function toggleVoiceInput(idx) {
+      if (!isSpeechRecognitionSupported()) {
+        showToast('Fitur suara-ke-teks tidak didukung di browser/perangkat ini. Gunakan Chrome di Android.', 'warning');
+        return;
+      }
+      if (activeSpeechRecognition && activeSpeechQuestionIdx === idx) {
+        activeSpeechRecognition.stop();
+        return;
+      }
+      if (activeSpeechRecognition) {
+        activeSpeechRecognition.stop();
+      }
+      mulaiRekamSuara(idx);
+    }
+
+    function mulaiRekamSuara(idx) {
+      const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognitionCtor();
+      recognition.lang = 'id-ID';
+      recognition.interimResults = false;
+      recognition.continuous = true;
+      recognition.maxAlternatives = 1;
+
+      activeSpeechRecognition = recognition;
+      activeSpeechQuestionIdx = idx;
+
+      const micIcon = document.getElementById(`mic-icon-${idx}`);
+      const micBtn = document.getElementById(`mic-btn-${idx}`);
+      const statusEl = document.getElementById(`mic-status-${idx}`);
+      const field = document.getElementById(`esai-answer-field-${idx}`);
+
+      recognition.onstart = () => {
+        if (micIcon) micIcon.setAttribute('data-lucide', 'square');
+        if (micBtn) micBtn.className = "absolute top-3 right-3 p-2 rounded-full bg-rose-600 text-white hover:bg-rose-700 transition-all shadow-sm animate-pulse";
+        if (statusEl) statusEl.classList.remove('hidden');
+        lucide.createIcons();
+      };
+
+      recognition.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) transcript += event.results[i][0].transcript;
+        }
+        if (transcript.trim() && field) {
+          const existing = field.value.trim();
+          field.value = existing ? `${existing} ${transcript.trim()}` : transcript.trim();
+          autoExpandTextarea(field);
+        }
+      };
+
+      recognition.onerror = (event) => {
+        if (event.error === 'not-allowed' || event.error === 'permission-denied') {
+          showToast('Izin mikrofon ditolak. Aktifkan izin mikrofon di pengaturan browser.', 'error');
+        } else if (event.error === 'no-speech') {
+          showToast('Tidak ada suara terdeteksi. Coba lagi.', 'warning');
+        } else {
+          showToast('Gagal mengenali suara: ' + event.error, 'error');
+        }
+      };
+
+      recognition.onend = () => {
+        if (micIcon) micIcon.setAttribute('data-lucide', 'mic');
+        if (micBtn) micBtn.className = "absolute top-3 right-3 p-2 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-all shadow-sm";
+        if (statusEl) statusEl.classList.add('hidden');
+        lucide.createIcons();
+        activeSpeechRecognition = null;
+        activeSpeechQuestionIdx = null;
+      };
+
+      try {
+        recognition.start();
+      } catch (e) {
+        showToast('Gagal memulai perekaman suara.', 'error');
+      }
     }
 
     function kirimJawabanEsai(event) {
