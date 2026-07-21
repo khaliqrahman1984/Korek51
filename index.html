@@ -343,11 +343,17 @@
             </div>
           </div>
           <div class="relative">
-            <textarea id="bulk-textbox" readonly inputmode="none" oninput="onBulkInput(this)" onkeydown="onBulkKeyDown(event)" rows="10" class="w-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-4 pr-14 font-mono text-sm leading-relaxed focus:outline-none focus:border-indigo-500 transition-all whitespace-pre bulk-textarea caret-indigo-600" placeholder="Pilih nama murid dahulu untuk mengisi otomatis..." spellcheck="false"></textarea>
-            <button type="button" id="bulk-mic-btn" onclick="toggleBulkVoiceInput()" title="Bicara untuk mengisi jawaban PG" class="absolute top-3 right-3 p-2 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-all shadow-sm">
+            <textarea id="bulk-textbox" readonly inputmode="none" oninput="onBulkInput(this)" onkeydown="onBulkKeyDown(event)" rows="10" class="w-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-4 pb-24 font-mono text-sm leading-relaxed focus:outline-none focus:border-indigo-500 transition-all whitespace-pre bulk-textarea caret-indigo-600" placeholder="Pilih nama murid dahulu untuk mengisi otomatis..." spellcheck="false"></textarea>
+            <button type="button" id="bulk-keyboard-btn" onclick="toggleBulkKeyboardMode()" title="Aktifkan keyboard qwerty untuk mengetik/menggeser manual" class="absolute bottom-14 left-3 z-10 p-2 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-all shadow-sm">
+              <i data-lucide="keyboard" class="w-4 h-4" id="bulk-keyboard-icon"></i>
+            </button>
+            <button type="button" id="bulk-mic-btn" onclick="toggleBulkVoiceInput()" title="Bicara untuk mengisi jawaban PG" class="absolute bottom-3 left-3 z-10 p-2 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-all shadow-sm">
               <i data-lucide="mic" class="w-4 h-4" id="bulk-mic-icon"></i>
             </button>
           </div>
+          <p id="bulk-keyboard-status" class="hidden text-[11px] font-semibold text-emerald-600 flex items-center gap-1.5">
+            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Keyboard aktif — Anda bisa mengetik & menggeser layar secara manual.
+          </p>
           <p id="bulk-mic-status" class="hidden text-[11px] font-semibold text-rose-600 flex items-center gap-1.5">
             <span class="w-2 h-2 bg-rose-600 rounded-full animate-pulse"></span> Sedang mendengarkan... ucapkan jawaban dipisah kata "dan" (mis: A dan B dan Kosong dan C)
           </p>
@@ -3133,11 +3139,16 @@ FORMAT KELUARAN (satu baris per murid):
 
       let baseEnabled = false; // syarat dasar: tombol cepat & Kembali boleh aktif atau tidak
 
-      // FIX: Textbox SELALU readonly + inputmode none agar keyboard qwerty HP
-      // tidak pernah muncul di menu LJK-Bulk, baik saat password murid aktif
-      // maupun tidak. Semua input hanya lewat tombol A-E/K & navigasi.
-      textarea.readOnly = true;
-      textarea.setAttribute('inputmode', 'none');
+      // FIX: Textbox readonly/qwerty mengikuti toggle manual "bulkKeyboardModeActive".
+      // Default (belum diaktifkan) = readonly, hanya bisa lewat tombol cepat.
+      // Saat diaktifkan = bisa diketik & scroll manual pakai keyboard asli.
+      if (bulkKeyboardModeActive) {
+        textarea.readOnly = false;
+        textarea.removeAttribute('inputmode');
+      } else {
+        textarea.readOnly = true;
+        textarea.setAttribute('inputmode', 'none');
+      }
 
       if (!passActive) {
         // FIX: Tombol cepat & Kembali dinonaktifkan selama textbox masih kosong.
@@ -3489,8 +3500,8 @@ FORMAT KELUARAN (satu baris per murid):
       lines[activeLineIdx] = activeLine;
       textarea.value = lines.join('\n');
       const offset = lines.slice(0, activeLineIdx).reduce((sum, l) => sum + l.length + 1, 0) + activeLine.length;
-      textarea.focus();
-      textarea.selectionStart = textarea.selectionEnd = offset;
+      focusTextareaNoKeyboard(textarea, offset);
+      scrollTextareaToCursor(textarea);
       const { jawaban: newJawaban } = parseBulkLine(activeLine);
       const counterSpan = document.getElementById('char-counter');
       if (counterSpan) counterSpan.textContent = `${newJawaban.length}/${maxLen}`;
@@ -3505,6 +3516,48 @@ FORMAT KELUARAN (satu baris per murid):
     // FIX: Fokus ke textarea tanpa memicu keyboard virtual muncul di HP.
     // Trik: set readonly sesaat sebelum focus(), lalu lepas readonly setelahnya
     // (hanya jika sebelumnya memang tidak readonly / mode tanpa password).
+    
+    let _bulkMeasureCanvas = null;
+    function getTextWidthPx(text, font) {
+      if (!_bulkMeasureCanvas) _bulkMeasureCanvas = document.createElement('canvas');
+      const ctx = _bulkMeasureCanvas.getContext('2d');
+      ctx.font = font;
+      return ctx.measureText(text).width;
+    }
+
+    function scrollTextareaToCursor(textarea) {
+      if (!textarea) return;
+      const value = textarea.value;
+      const cursorPos = textarea.selectionStart;
+      const lineIdx = value.substring(0, cursorPos).split('\n').length - 1;
+
+      const style = window.getComputedStyle(textarea);
+      let lineHeight = parseFloat(style.lineHeight);
+      if (isNaN(lineHeight)) {
+        const fontSize = parseFloat(style.fontSize) || 14;
+        lineHeight = fontSize * 1.4;
+      }
+
+      // ---- SCROLL VERTIKAL ----
+      const cursorY = lineIdx * lineHeight;
+      const visibleHeight = textarea.clientHeight;
+      const currentScrollTop = textarea.scrollTop;
+      if (cursorY < currentScrollTop) {
+        textarea.scrollTop = Math.max(0, cursorY - lineHeight);
+      } else if (cursorY + lineHeight > currentScrollTop + visibleHeight) {
+        textarea.scrollTop = cursorY + lineHeight * 2 - visibleHeight;
+      }
+
+      // ---- SCROLL HORIZONTAL ----
+      // Karena text-align:right dan kursor pada interaksi tombol Bulk Mode
+      // selalu berada di AKHIR baris aktif, cukup dorong scrollLeft ke nilai
+      // maksimum. Browser otomatis membatasi (clamp) ke batas valid,
+      // sehingga bagian paling kanan/akhir teks selalu terlihat.
+      requestAnimationFrame(() => {
+        textarea.scrollLeft = textarea.scrollWidth;
+      });
+    }
+    
     function focusTextareaNoKeyboard(textarea, cursorPos) {
       if (!textarea) return;
       const wasReadOnly = textarea.readOnly;
@@ -3513,6 +3566,7 @@ FORMAT KELUARAN (satu baris per murid):
       if (typeof cursorPos === 'number') {
         textarea.selectionStart = textarea.selectionEnd = cursorPos;
       }
+      scrollTextareaToCursor(textarea);
       if (!wasReadOnly) {
         setTimeout(() => { textarea.removeAttribute('readonly'); }, 50);
       }
@@ -3921,6 +3975,27 @@ FORMAT KELUARAN (satu baris per murid):
     // Contoh ucapan: "A dan B dan Kosong dan C dan D"
     // ============================================================
     let activeBulkSpeechRecognition = null;
+    let bulkKeyboardModeActive = false;
+
+    function toggleBulkKeyboardMode() {
+      bulkKeyboardModeActive = !bulkKeyboardModeActive;
+      const btn = document.getElementById('bulk-keyboard-btn');
+      const icon = document.getElementById('bulk-keyboard-icon');
+      const status = document.getElementById('bulk-keyboard-status');
+      if (bulkKeyboardModeActive) {
+        if (btn) btn.className = "absolute bottom-14 left-3 z-10 p-2 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition-all shadow-sm";
+        if (icon) icon.setAttribute('data-lucide', 'keyboard');
+        if (status) status.classList.remove('hidden');
+        showToast('Keyboard qwerty diaktifkan. Ketuk textbox untuk mengetik langsung.', 'success');
+      } else {
+        if (btn) btn.className = "absolute bottom-14 left-3 z-10 p-2 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-all shadow-sm";
+        if (icon) icon.setAttribute('data-lucide', 'keyboard-off');
+        if (status) status.classList.add('hidden');
+        showToast('Keyboard qwerty dinonaktifkan. Kembali ke mode tombol cepat.', 'info');
+      }
+      lucide.createIcons();
+      applyBulkLockState();
+    }
 
     function mapWordToBulkChar(word) {
       const w = (word || '').trim().toLowerCase();
