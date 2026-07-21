@@ -3133,9 +3133,13 @@ FORMAT KELUARAN (satu baris per murid):
 
       let baseEnabled = false; // syarat dasar: tombol cepat & Kembali boleh aktif atau tidak
 
+      // FIX: Textbox SELALU readonly + inputmode none agar keyboard qwerty HP
+      // tidak pernah muncul di menu LJK-Bulk, baik saat password murid aktif
+      // maupun tidak. Semua input hanya lewat tombol A-E/K & navigasi.
+      textarea.readOnly = true;
+      textarea.setAttribute('inputmode', 'none');
+
       if (!passActive) {
-        textarea.readOnly = false;
-        textarea.removeAttribute('inputmode');
         // FIX: Tombol cepat & Kembali dinonaktifkan selama textbox masih kosong.
         const hasContent = textarea.value.trim().length > 0;
         baseEnabled = hasContent;
@@ -3145,8 +3149,6 @@ FORMAT KELUARAN (satu baris per murid):
           btn.classList.toggle('cursor-not-allowed', !hasContent);
         });
       } else {
-        textarea.readOnly = true;
-        textarea.setAttribute('inputmode', 'none');
         const stName = document.getElementById('dd-murid') ? document.getElementById('dd-murid').value : '';
         const isVerified = !!(stName && bulkVerifiedStudents.has(stName));
         baseEnabled = isVerified;
@@ -3332,6 +3334,14 @@ FORMAT KELUARAN (satu baris per murid):
 
     // FIX: Deteksi & bersihkan karakter yang tidak diizinkan.
     // Hanya huruf A, B, C, D, E, atau SPASI (dianggap kosong/"K") yang boleh masuk.
+    
+    function getAllowedPGLetters() {
+      const pengecoh = appData.config.pilihanPG || 'A-D';
+      if (pengecoh === 'A-C') return ['A', 'B', 'C'];
+      if (pengecoh === 'A-E') return ['A', 'B', 'C', 'D', 'E'];
+      return ['A', 'B', 'C', 'D'];
+    }
+    
     function sanitizeBulkInput(textarea) {
       if (!textarea) return;
       const maxLen = appData.config.jumlahSoal || 5;
@@ -3341,7 +3351,8 @@ FORMAT KELUARAN (satu baris per murid):
       if (!activeLine.includes(';;')) return;
       const { nama, jawaban } = parseBulkLine(activeLine);
       const rawUpper = jawaban.toUpperCase();
-      const allowedChars = ['A', 'B', 'C', 'D', 'E', 'K', ' '];
+      const allowedLetters = getAllowedPGLetters();
+      const allowedChars = [...allowedLetters, 'K', ' '];
       let cleaned = '';
       let hasInvalid = false;
       for (const ch of rawUpper) {
@@ -3916,7 +3927,7 @@ FORMAT KELUARAN (satu baris per murid):
       if (!w) return null;
       if (w === 'kosong' || w === 'k') return ' ';
       const upper = w.toUpperCase().replace(/[.,]/g, '');
-      if (['A', 'B', 'C', 'D', 'E'].includes(upper)) return upper;
+      if (getAllowedPGLetters().includes(upper)) return upper;
       return null;
     }
 
