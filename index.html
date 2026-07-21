@@ -847,14 +847,14 @@ FORMAT KELUARAN (satu baris per murid):
       <section id="panel-guru-pengaturan" class="hidden max-w-xl mx-auto bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-6">
         <h2 class="font-bold text-slate-800 text-lg border-b border-slate-100 pb-3">Konfigurasi & Keamanan</h2>
         <div class="space-y-4">
-          <div class="flex items-center justify-between p-3.5 bg-amber-50 rounded-xl border border-amber-200">
+          <div class="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-200">
             <div>
-              <h4 class="text-sm font-bold text-amber-800">Sembunyikan Skor & Kunci Jawaban Esai</h4>
-              <p class="text-[11px] text-amber-600">Murid tidak akan melihat Jawaban, skor, alasan, dan kunci jawaban esai yang sudah dinilai.</p>
+              <h4 class="text-sm font-bold text-slate-700">Sembunyikan Skor & Kunci Jawaban Esai</h4>
+              <p class="text-[11px] text-slate-400">Murid tidak akan melihat jawaban, skor, alasan, dan kunci jawaban esai yang sudah dinilai.</p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
-              <input type="checkbox" id="config-sembunyikan-feedback-esai" onchange="onSembunyikanFeedbackEsaiChanged()" class="sr-only peer">
-              <div class="w-11 h-6 bg-slate-300 rounded-full peer peer-checked:bg-amber-600 transition-all after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
+              <input type="checkbox" id="config-sembunyikan-esai-active" onchange="onSembunyikanEsaiToggleChanged()" class="sr-only peer">
+              <div class="w-11 h-6 bg-slate-300 rounded-full peer peer-checked:bg-indigo-600 transition-all after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
             </label>
           </div>
           <div class="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-200">
@@ -862,7 +862,7 @@ FORMAT KELUARAN (satu baris per murid):
               <h4 class="text-sm font-bold text-slate-700">Wajibkan Sandi Murid</h4>
               <p class="text-[11px] text-slate-400">Murid memasukkan sandi akses saat memilih nama murid.</p>
             </div>
-            <input type="checkbox" id="config-student-pass-active" onchange="toggleStudentPassTip()" class="w-5 h-5 accent-indigo-600 cursor-pointer">
+            <input type="checkbox" id="config-student-pass-active" onchange="onStudentPassToggleChanged()" class="w-5 h-5 accent-indigo-600 cursor-pointer">
           </div>
           <div id="student-pass-tip" class="hidden p-3.5 bg-amber-50 border border-amber-200 rounded-xl space-y-3">
             <div class="flex items-start gap-2">
@@ -878,7 +878,7 @@ FORMAT KELUARAN (satu baris per murid):
               <h4 class="text-sm font-bold text-slate-700">Aktifkan Proteksi Anti-Tab Switching</h4>
               <p class="text-[11px] text-slate-400">Mendeteksi kecurangan saat murid berpindah tab browser.</p>
             </div>
-            <input type="checkbox" id="config-anti-cheat-active" onchange="toggleAntiCheatList()" class="w-5 h-5 accent-red-600 cursor-pointer">
+            <input type="checkbox" id="config-anti-cheat-active" onchange="onAntiCheatToggleChanged()" class="w-5 h-5 accent-red-600 cursor-pointer">
           </div>
           <div id="anti-cheat-tip" class="hidden p-3.5 bg-amber-50 border border-amber-200 rounded-xl">
             <div class="flex items-start gap-2">
@@ -921,11 +921,11 @@ FORMAT KELUARAN (satu baris per murid):
               <p class="text-[11px] text-slate-400">Referensi opsi sekolah/kelas untuk keperluan lain. Kosongkan jika tidak diperlukan.</p>
               <div>
                 <label class="block text-[10px] font-semibold text-slate-500 mb-1">Daftar Asal Sekolah (satu per baris)</label>
-                <textarea id="config-daftar-sekolah" rows="3" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500" placeholder="SMA Negeri 1 Jakarta&#10;SMA Negeri 2 Bandung"></textarea>
+                <textarea id="config-daftar-sekolah" rows="3" oninput="debounceSaveDaftarSekolahKelas()" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500" placeholder="SDN Kuin Cerucuk 1 Banjarmasin&#10;SDN Alalak Tengah 4 Banjarmasin"></textarea>
               </div>
               <div>
                 <label class="block text-[10px] font-semibold text-slate-500 mb-1">Daftar Kelas (satu per baris)</label>
-                <textarea id="config-daftar-kelas" rows="3" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500" placeholder="XI-MIPA 1&#10;XI-MIPA 2&#10;XI-IPS 1"></textarea>
+                <textarea id="config-daftar-kelas" rows="3" oninput="debounceSaveDaftarSekolahKelas()" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500" placeholder="XI-MIPA 1&#10;XI-MIPA 2&#10;XI-IPS 1"></textarea>
               </div>
             </div>
           </div>
@@ -941,10 +941,10 @@ FORMAT KELUARAN (satu baris per murid):
                 <input type="password" id="cfg-pass-new" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs outline-none">
               </div>
             </div>
+            <button onclick="saveSystemSettings(event)" class="w-full bg-indigo-600 text-white font-semibold py-2.5 rounded-xl hover:bg-indigo-700 active:scale-95 transition-all text-xs shadow-md">
+              Simpan Perubahan Password Guru
+            </button>
           </div>
-          <button onclick="saveSystemSettings(event)" class="w-full bg-indigo-600 text-white font-semibold py-3 rounded-xl hover:bg-indigo-700 transition-all text-sm shadow-md">
-            Simpan Konfigurasi
-          </button>
         </div>
       </section>
 
@@ -1118,12 +1118,12 @@ FORMAT KELUARAN (satu baris per murid):
         passwordGuru: "admin123",
         aktifkanPasswordMurid: false,
         antiCheat: false,
+        sembunyikanSkorEsai: false,
         mapel: "",
         mapelEsai: "",
         aktifkanDaftarMandiri: false,
         daftarSekolah: [],
-        daftarKelas: [],
-        sembunyikanFeedbackEsai: false
+        daftarKelas: []
       },
       pg: [
         { timestamp: new Date().toISOString(), sekolah: "SMA Negeri 1 Jakarta", kelas: "XI-MIPA 1", nama: "Budi Santoso", jawaban: "ABCDE", benar: 3, salah: 2, kosong: 0, nilai: 60.00, rowIdx: 2 }
@@ -1139,7 +1139,7 @@ FORMAT KELUARAN (satu baris per murid):
     // GANTI URL DI BAWAH INI dengan URL deployment Apps Script Anda
     // (hasil dari Deploy > Manage deployments, yang diakhiri /exec)
     // ============================================================
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwVUcNLouu-o_S183lcjXku9nMhU0N45MXdImPA4QtJMIHTKJqy9PmwF_Jpd9jxeHAg/exec';
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycby83fKL-9-Kti-ZpsXhwczm_gHu-ZSqqIj7mUGVYKABYsOcIdMH9kPxGfKADACX0nqk/exec';
 
     function gasFetch(fn, args) {
       return fetch(GAS_API_URL, {
@@ -1432,11 +1432,11 @@ FORMAT KELUARAN (satu baris per murid):
       const rawSalah = parseFloat(appData.config.bobotSalah);
       if (salahEl) salahEl.value = (!isNaN(rawSalah)) ? rawSalah : 0;
 
+      const sembunyikanEsaiEl = document.getElementById('config-sembunyikan-esai-active');
+      if (sembunyikanEsaiEl) sembunyikanEsaiEl.checked = !!appData.config.sembunyikanSkorEsai;
       const passActiveEl = document.getElementById('config-student-pass-active');
       if (passActiveEl) passActiveEl.checked = !!appData.config.aktifkanPasswordMurid;
       toggleStudentPassTip();
-      const sembunyikanFeedbackEl = document.getElementById('config-sembunyikan-feedback-esai');
-      if (sembunyikanFeedbackEl) sembunyikanFeedbackEl.checked = !!appData.config.sembunyikanFeedbackEsai;
       const antiCheatEl = document.getElementById('config-anti-cheat-active');
       if (antiCheatEl) antiCheatEl.checked = !!appData.config.antiCheat;
       toggleAntiCheatList();
@@ -2453,18 +2453,18 @@ FORMAT KELUARAN (satu baris per murid):
       const selectedName = document.getElementById('dd-murid') ? document.getElementById('dd-murid').value : '';
       const esaiList = Array.isArray(appData.esai) ? appData.esai : [];
       const record = selectedName ? esaiList.find(r => r && r.nama === selectedName) : null;
-      const sudahDinilaiKeseluruhan = !!(record && record.sudahDinilai && record.nilai !== null && record.nilai !== undefined);
-      const sembunyikan = !!appData.config.sembunyikanFeedbackEsai && sudahDinilaiKeseluruhan;
+      // FIX: Jika toggle "Sembunyikan Skor & Kunci Jawaban Esai" aktif DAN esai murid ini sudah dinilai,
+      // maka jawaban, skor, alasan, dan kunci jawaban tidak ditampilkan ke murid.
+      const sudahDinilaiRecord = !!(record && record.sudahDinilai && record.nilai !== null && record.nilai !== undefined);
+      const hideForStudent = !!appData.config.sembunyikanSkorEsai && sudahDinilaiRecord;
 
       for (let i = 0; i < listSoal.length; i++) {
         const box = document.getElementById(`esai-feedback-soal-${i}`);
         const answerField = document.getElementById(`esai-answer-field-${i}`);
 
         if (answerField) {
-          if (sembunyikan) {
-            // Jawaban sudah dinilai & mode sembunyikan aktif -> jangan tampilkan jawaban lama
+          if (hideForStudent) {
             answerField.value = '';
-            answerField.placeholder = 'Jawaban sudah dinilai. Ditampilkan tersembunyi oleh pengaturan guru.';
           } else {
             const bolehMuatJawaban = !!appData.config.aktifkanPasswordMurid || (record && record.sudahDinilai) || (selectedName && esaiEditUnlocked.has(selectedName));
             if (record && record.jawaban && bolehMuatJawaban) {
@@ -2472,17 +2472,20 @@ FORMAT KELUARAN (satu baris per murid):
               answerField.value = (prevAnswer && prevAnswer !== '(tidak ada jawaban)') ? prevAnswer : '';
             }
             // FIX: Jika belum ada jawaban tersimpan, JANGAN kosongkan field.
-            // Sebelumnya field selalu di-reset ke '' di sini, sehingga jawaban yang
-            // baru diketik murid (sebelum memilih nama, lalu memilih nama untuk
-            // menutup peringatan "nama belum diisi") langsung hilang karena fungsi
-            // ini terpanggil ulang lewat onMuridSelected().
           }
           autoExpandTextarea(answerField);
         }
 
         if (!box) continue;
-        if (!record || sembunyikan) { box.classList.add('hidden'); box.innerHTML = ''; continue; }
+        if (!record) { box.classList.add('hidden'); box.innerHTML = ''; continue; }
         box.classList.remove('hidden');
+
+        if (hideForStudent) {
+          box.innerHTML = `<div class="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-dashed border-slate-200 rounded-xl"><i data-lucide="eye-off" class="w-3.5 h-3.5 text-slate-400"></i><span class="text-xs font-semibold text-slate-400">Nilai & pembahasan disembunyikan oleh guru.</span></div>`;
+          lucide.createIcons();
+          continue;
+        }
+
         const sudahDinilai = !!record.sudahDinilai && Array.isArray(record.nilaiPerSoal) && record.nilaiPerSoal[i] !== undefined && record.nilaiPerSoal[i] !== null;
         if (!sudahDinilai) {
           box.innerHTML = `<div class="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-dashed border-slate-200 rounded-xl"><i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i><span class="text-xs font-semibold text-slate-400">Belum dinilai</span></div>`;
@@ -2820,13 +2823,6 @@ FORMAT KELUARAN (satu baris per murid):
       lucide.createIcons();
     }
 
-    function onSembunyikanFeedbackEsaiChanged() {
-      const checkbox = document.getElementById('config-sembunyikan-feedback-esai');
-      if (!checkbox) return;
-      appData.config.sembunyikanFeedbackEsai = checkbox.checked;
-      renderEssayFeedbackForSelectedStudent();
-    }
-
     async function copyStudentCredentials() {
       const muridList = Array.isArray(appData.murid) ? appData.murid : [];
       if (muridList.length === 0) { showToast('Belum ada murid terdaftar.', 'warning'); return; }
@@ -2965,23 +2961,77 @@ FORMAT KELUARAN (satu baris per murid):
       renderSidebarMenu();
       const box = document.getElementById('daftar-mandiri-sekolah-kelas-box');
       if (box) box.classList.toggle('hidden', !appData.config.aktifkanDaftarMandiri);
+      saveToggleConfig();
     }
 
+    // FIX: Toggle "Sembunyikan Skor & Kunci Jawaban Esai" — tersimpan otomatis ke spreadsheet saat diklik
+    function onSembunyikanEsaiToggleChanged() {
+      appData.config.sembunyikanSkorEsai = document.getElementById('config-sembunyikan-esai-active').checked;
+      saveToggleConfig();
+      renderEssayFeedbackForSelectedStudent();
+    }
+
+    // FIX: Toggle "Wajibkan Sandi Murid" — tersimpan otomatis ke spreadsheet saat diklik
+    function onStudentPassToggleChanged() {
+      toggleStudentPassTip();
+      appData.config.aktifkanPasswordMurid = document.getElementById('config-student-pass-active').checked;
+      saveToggleConfig();
+    }
+
+    // FIX: Toggle "Aktifkan Proteksi Anti-Tab Switching" — tersimpan otomatis ke spreadsheet saat diklik
+    function onAntiCheatToggleChanged() {
+      toggleAntiCheatList();
+      appData.config.antiCheat = document.getElementById('config-anti-cheat-active').checked;
+      saveToggleConfig();
+    }
+
+    // FIX: Daftar Asal Sekolah & Kelas (referensi Daftar Mandiri) — tersimpan otomatis
+    // 5 detik setelah tidak ada aktivitas mengetik di textarea (debounce), tidak perlu blur/klik apa pun.
+    let daftarSekolahKelasDebounceTimer = null;
+    function debounceSaveDaftarSekolahKelas() {
+      if (daftarSekolahKelasDebounceTimer) clearTimeout(daftarSekolahKelasDebounceTimer);
+      daftarSekolahKelasDebounceTimer = setTimeout(() => {
+        onDaftarSekolahKelasChanged();
+      }, 5000);
+    }
+
+    function onDaftarSekolahKelasChanged() {
+      appData.config.daftarSekolah = document.getElementById('config-daftar-sekolah').value.split('\n').map(s => s.trim()).filter(Boolean);
+      appData.config.daftarKelas = document.getElementById('config-daftar-kelas').value.split('\n').map(s => s.trim()).filter(Boolean);
+      saveToggleConfig();
+    }
+
+    // FIX: Simpan konfigurasi toggle/daftar ke spreadsheet TANPA melalui tombol "Simpan Konfigurasi"
+    // (tombol tsb sekarang khusus untuk ubah password guru)
+    function saveToggleConfig() {
+      if (isGAS) {
+        google.script.run
+          .withSuccessHandler(res => {
+            if (res && res.success) showToast('Pengaturan tersimpan!', 'success');
+            else showToast((res && res.error) ? res.error : 'Gagal menyimpan pengaturan.', 'error');
+          })
+          .withFailureHandler(err => {
+            showToast('Gagal menyimpan pengaturan: ' + (err && err.message ? err.message : 'Terjadi kesalahan.'), 'error');
+          })
+          .updatePengaturanGuru(appData.config);
+      } else {
+        showToast('[Demo] Pengaturan tersimpan!', 'success');
+      }
+    }
+
+    // FIX: Tombol ini sekarang HANYA untuk mengubah password guru.
+    // Toggle Wajibkan Sandi Murid, Anti-Cheat, Daftar Mandiri, dan referensi
+    // sekolah/kelas sudah tersimpan otomatis lewat saveToggleConfig().
     function saveSystemSettings(event) {
       const passOld = document.getElementById('cfg-pass-old').value.trim();
       const passNew = document.getElementById('cfg-pass-new').value.trim();
-      if (passOld || passNew) {
-        if (passOld !== appData.config.passwordGuru) { showToast('Sandi lama salah!', 'error'); return; }
-        if (!passNew) { showToast('Sandi baru tidak boleh kosong.', 'warning'); return; }
-        appData.config.passwordGuru = passNew;
-      }
-      appData.config.aktifkanPasswordMurid = document.getElementById('config-student-pass-active').checked;
-      appData.config.antiCheat = document.getElementById('config-anti-cheat-active').checked;
-      appData.config.aktifkanDaftarMandiri = document.getElementById('config-daftar-mandiri-active').checked;
-      appData.config.sembunyikanFeedbackEsai = document.getElementById('config-sembunyikan-feedback-esai') ? document.getElementById('config-sembunyikan-feedback-esai').checked : appData.config.sembunyikanFeedbackEsai;
-      appData.config.daftarSekolah = document.getElementById('config-daftar-sekolah').value.split('\n').map(s => s.trim()).filter(Boolean);
-      appData.config.daftarKelas = document.getElementById('config-daftar-kelas').value.split('\n').map(s => s.trim()).filter(Boolean);
+      if (!passOld && !passNew) { showToast('Isi Sandi Lama dan Sandi Baru terlebih dahulu.', 'warning'); return; }
+      if (passOld !== appData.config.passwordGuru) { showToast('Sandi lama salah!', 'error'); return; }
+      if (!passNew) { showToast('Sandi baru tidak boleh kosong.', 'warning'); return; }
+      appData.config.passwordGuru = passNew;
       updatePengaturanGuruOnBackend();
+      document.getElementById('cfg-pass-old').value = '';
+      document.getElementById('cfg-pass-new').value = '';
     }
 
     // ============================================================
