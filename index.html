@@ -34,10 +34,24 @@
       transition: all 0.1s;
     }
     .quick-key-btn:active { transform: scale(0.93); }
-    .bulk-textarea { text-align: right; }
+    .bulk-textarea {
+  text-align: right;
+  white-space: pre;
+  overflow-x: auto;
+  overflow-wrap: normal;
+  max-width: 100%;
+  scrollbar-width: thin;
+}
     @keyframes glow-pulse {
       0%, 100% { text-shadow: 0 0 6px #6366f1, 0 0 12px #6366f1; opacity: 1; }
       50% { text-shadow: 0 0 18px #818cf8, 0 0 32px #818cf8; opacity: 0.7; }
+    }
+    @keyframes cursor-blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+    .bulk-cursor-blink {
+      animation: cursor-blink 0.9s steps(1) infinite;
     }
     .mapel-glow {
       animation: glow-pulse 1.6s ease-in-out infinite;
@@ -346,7 +360,7 @@
               </button>
             </div>
           </div>
-          <textarea id="bulk-textbox" class="hidden" readonly inputmode="none" oninput="onBulkInput(this)" onkeydown="onBulkKeyDown(event)" spellcheck="false"></textarea>
+          <textarea id="bulk-textbox" class="hidden bulk-textarea" wrap="off" readonly inputmode="none" oninput="onBulkInput(this)" onkeydown="onBulkKeyDown(event)" spellcheck="false"></textarea>
           <p id="bulk-mic-status" class="hidden text-[11px] font-semibold text-rose-600 flex items-center gap-1.5">
             <span class="w-2 h-2 bg-rose-600 rounded-full animate-pulse"></span> Sedang mendengarkan... ucapkan jawaban dipisah kata "dan" (mis: A dan B dan Kosong dan C)
           </p>
@@ -847,15 +861,21 @@ FORMAT KELUARAN (satu baris per murid):
       <section id="panel-guru-pengaturan" class="hidden max-w-xl mx-auto bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-6">
         <h2 class="font-bold text-slate-800 text-lg border-b border-slate-100 pb-3">Konfigurasi & Keamanan</h2>
         <div class="space-y-4">
+          <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+            <h4 class="text-sm font-bold text-slate-700">Halaman Awal Menu Murid</h4>
+            <p class="text-[11px] text-slate-400 mb-1">Pilih halaman yang pertama kali tampil saat murid membuka menu MURID.</p>
+            <div class="relative flex bg-slate-200 rounded-xl p-1">
+              <div id="halaman-awal-slider-bg" class="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] bg-indigo-600 rounded-lg transition-all duration-200"></div>
+              <button type="button" id="btn-halaman-awal-pg" onclick="setHalamanAwalMurid('jawaban-pg')" class="relative z-10 flex-1 py-2 text-xs font-bold rounded-lg transition-all">Jawaban PG</button>
+              <button type="button" id="btn-halaman-awal-esai" onclick="setHalamanAwalMurid('jawaban-esai')" class="relative z-10 flex-1 py-2 text-xs font-bold rounded-lg transition-all">Jawaban Esai</button>
+            </div>
+          </div>
           <div class="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-200">
             <div>
               <h4 class="text-sm font-bold text-slate-700">Sembunyikan Skor & Kunci Jawaban Esai</h4>
               <p class="text-[11px] text-slate-400">Murid tidak akan melihat jawaban, skor, alasan, dan kunci jawaban esai yang sudah dinilai.</p>
             </div>
-            <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
-              <input type="checkbox" id="config-sembunyikan-esai-active" onchange="onSembunyikanEsaiToggleChanged()" class="sr-only peer">
-              <div class="w-11 h-6 bg-slate-300 rounded-full peer peer-checked:bg-indigo-600 transition-all after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
-            </label>
+            <input type="checkbox" id="config-sembunyikan-esai-active" onchange="onSembunyikanEsaiToggleChanged()" class="w-5 h-5 accent-indigo-600 cursor-pointer shrink-0 ml-3">
           </div>
           <div class="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-200">
             <div>
@@ -912,10 +932,7 @@ FORMAT KELUARAN (satu baris per murid):
                 <h4 class="text-sm font-bold text-slate-700">Tampilkan Menu Daftar Mandiri</h4>
                 <p class="text-[11px] text-slate-400">Izinkan murid mendaftarkan diri sendiri tanpa dientri guru.</p>
               </div>
-              <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
-                <input type="checkbox" id="config-daftar-mandiri-active" onchange="onDaftarMandiriToggleChanged()" class="sr-only peer">
-                <div class="w-11 h-6 bg-slate-300 rounded-full peer peer-checked:bg-emerald-600 transition-all after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
-              </label>
+              <input type="checkbox" id="config-daftar-mandiri-active" onchange="onDaftarMandiriToggleChanged()" class="w-5 h-5 accent-emerald-600 cursor-pointer shrink-0 ml-3">
             </div>
             <div id="daftar-mandiri-sekolah-kelas-box" class="hidden pt-3 border-t border-slate-200 space-y-3">
               <p class="text-[11px] text-slate-400">Referensi opsi sekolah/kelas untuk keperluan lain. Kosongkan jika tidak diperlukan.</p>
@@ -1123,7 +1140,8 @@ FORMAT KELUARAN (satu baris per murid):
         mapelEsai: "",
         aktifkanDaftarMandiri: false,
         daftarSekolah: [],
-        daftarKelas: []
+        daftarKelas: [],
+        halamanAwalMurid: 'jawaban-pg'
       },
       pg: [
         { timestamp: new Date().toISOString(), sekolah: "SMA Negeri 1 Jakarta", kelas: "XI-MIPA 1", nama: "Budi Santoso", jawaban: "ABCDE", benar: 3, salah: 2, kosong: 0, nilai: 60.00, rowIdx: 2 }
@@ -1139,7 +1157,7 @@ FORMAT KELUARAN (satu baris per murid):
     // GANTI URL DI BAWAH INI dengan URL deployment Apps Script Anda
     // (hasil dari Deploy > Manage deployments, yang diakhiri /exec)
     // ============================================================
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycby83fKL-9-Kti-ZpsXhwczm_gHu-ZSqqIj7mUGVYKABYsOcIdMH9kPxGfKADACX0nqk/exec';
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzrtcKJAvouW-Dn90ukmUDYm7keUWwe1tJFhqB0tY_7yPVSuMtPCu5F9czqZNRtExrJ/exec';
 
     function gasFetch(fn, args) {
       return fetch(GAS_API_URL, {
@@ -1440,6 +1458,7 @@ FORMAT KELUARAN (satu baris per murid):
       const antiCheatEl = document.getElementById('config-anti-cheat-active');
       if (antiCheatEl) antiCheatEl.checked = !!appData.config.antiCheat;
       toggleAntiCheatList();
+      renderHalamanAwalSlider();
       const daftarMandiriEl = document.getElementById('config-daftar-mandiri-active');
       if (daftarMandiriEl) daftarMandiriEl.checked = !!appData.config.aktifkanDaftarMandiri;
       const daftarSekolahEl = document.getElementById('config-daftar-sekolah');
@@ -1641,7 +1660,14 @@ FORMAT KELUARAN (satu baris per murid):
         selectedSubNav = 'guru-reset'; setSubNav(selectedSubNav);
       } else {
         sidebar.classList.remove('md:hidden'); filterSect.classList.remove('hidden'); triggerBtn.classList.remove('hidden');
-        selectedSubNav = SIDEBAR_ITEMS[target][0].id; setSubNav(selectedSubNav);
+        if (target === 'MURID') {
+          const preferred = appData.config.halamanAwalMurid || 'jawaban-pg';
+          const validIds = SIDEBAR_ITEMS['MURID'].map(i => i.id);
+          selectedSubNav = validIds.includes(preferred) ? preferred : SIDEBAR_ITEMS[target][0].id;
+        } else {
+          selectedSubNav = SIDEBAR_ITEMS[target][0].id;
+        }
+        setSubNav(selectedSubNav);
       }
     }
 
@@ -2815,6 +2841,33 @@ FORMAT KELUARAN (satu baris per murid):
       }
     }
 
+    // ============================================================
+    // FIX: Halaman Awal Menu Murid — slide toggle Jawaban PG / Jawaban Esai
+    // ============================================================
+    function renderHalamanAwalSlider() {
+      const bg = document.getElementById('halaman-awal-slider-bg');
+      const btnPG = document.getElementById('btn-halaman-awal-pg');
+      const btnEsai = document.getElementById('btn-halaman-awal-esai');
+      if (!bg || !btnPG || !btnEsai) return;
+      const current = appData.config.halamanAwalMurid || 'jawaban-pg';
+      if (current === 'jawaban-esai') {
+        bg.style.left = 'calc(50% + 2px)';
+        btnPG.className = 'relative z-10 flex-1 py-2 text-xs font-bold rounded-lg transition-all text-slate-500';
+        btnEsai.className = 'relative z-10 flex-1 py-2 text-xs font-bold rounded-lg transition-all text-white';
+      } else {
+        bg.style.left = '4px';
+        btnPG.className = 'relative z-10 flex-1 py-2 text-xs font-bold rounded-lg transition-all text-white';
+        btnEsai.className = 'relative z-10 flex-1 py-2 text-xs font-bold rounded-lg transition-all text-slate-500';
+      }
+    }
+
+    function setHalamanAwalMurid(val) {
+      appData.config.halamanAwalMurid = val;
+      renderHalamanAwalSlider();
+      saveToggleConfig();
+      showToast(`Halaman awal murid diatur ke: ${val === 'jawaban-esai' ? 'Jawaban Esai' : 'Jawaban PG'}`, 'success');
+    }
+
     function toggleStudentPassTip() {
       const checkbox = document.getElementById('config-student-pass-active');
       const tip = document.getElementById('student-pass-tip');
@@ -3429,8 +3482,9 @@ FORMAT KELUARAN (satu baris per murid):
           const ch = (entry.jawaban[i] || '').toUpperCase().trim();
           const isCursorHere = isActiveRow && i === nextEmptyIdx;
           if (!ch) {
-            const cursorCls = isCursorHere ? 'bg-indigo-100 border-indigo-400 text-indigo-500 animate-pulse' : 'bg-slate-100 text-slate-300 border-slate-200';
-            bodyHtml2 += `<td class="py-2 px-2"><span class="inline-flex items-center justify-center w-6 h-6 rounded-md border text-[11px] font-bold ${cursorCls}">${isCursorHere ? '|' : '·'}</span></td>`;
+            const cursorCls = isCursorHere ? 'bg-indigo-100 border-indigo-400 text-indigo-500 font-extrabold' : 'bg-slate-100 text-slate-300 border-slate-200';
+            const cursorSpanCls = isCursorHere ? ' bulk-cursor-blink' : '';
+            bodyHtml2 += `<td class="py-2 px-2"><span class="inline-flex items-center justify-center w-6 h-6 rounded-md border text-[11px] font-bold ${cursorCls}${cursorSpanCls}">${isCursorHere ? '|' : '·'}</span></td>`;
           } else {
             const cls = letterColors2[ch] || 'bg-slate-100 text-slate-600 border-slate-200';
             bodyHtml2 += `<td class="py-2 px-2"><span class="inline-flex items-center justify-center w-6 h-6 rounded-md border text-[11px] font-extrabold ${cls}">${ch}</span></td>`;
@@ -3440,6 +3494,31 @@ FORMAT KELUARAN (satu baris per murid):
       });
       tbody.innerHTML = bodyHtml2;
       lucide.createIcons();
+      scrollVisualTableToCursor();
+    }
+
+    // FIX: Scroll otomatis tabel visual bulk (yang terlihat di layar) mengikuti
+    // posisi kursor aktif (sel dengan indikator berkedip "|"), baik ke kanan
+    // maupun ke kiri, supaya kolom yang sedang diisi selalu terlihat.
+    function scrollVisualTableToCursor() {
+      const wrap = document.getElementById('bulk-visual-table-wrap');
+      if (!wrap) return;
+      requestAnimationFrame(() => {
+        const activeCellSpan = wrap.querySelector('td span.bulk-cursor-blink');
+        if (!activeCellSpan) return;
+        const cellTd = activeCellSpan.closest('td');
+        if (!cellTd) return;
+        const wrapRect = wrap.getBoundingClientRect();
+        const cellRect = cellTd.getBoundingClientRect();
+        const stickyColWidth = 140; // perkiraan lebar kolom "Nama Murid" yang sticky di kiri
+        const offsetLeft = cellRect.left - wrapRect.left + wrap.scrollLeft;
+        const offsetRight = offsetLeft + cellRect.width;
+        if (offsetLeft < wrap.scrollLeft + stickyColWidth) {
+          wrap.scrollLeft = Math.max(0, offsetLeft - stickyColWidth - 10);
+        } else if (offsetRight > wrap.scrollLeft + wrap.clientWidth) {
+          wrap.scrollLeft = offsetRight - wrap.clientWidth + 20;
+        }
+      });
     }
 
     function onBulkInput(textarea) {
@@ -3654,10 +3733,12 @@ FORMAT KELUARAN (satu baris per murid):
       }
 
       // ---- SCROLL HORIZONTAL ----
-      // Karena text-align:right dan kursor pada interaksi tombol Bulk Mode
-      // selalu berada di AKHIR baris aktif, cukup dorong scrollLeft ke nilai
-      // maksimum. Browser otomatis membatasi (clamp) ke batas valid,
-      // sehingga bagian paling kanan/akhir teks selalu terlihat.
+      // Semua input jawaban (tombol A-E/K, Kembali, Enter, Lewati) selalu
+      // menambah/menghapus karakter di UJUNG baris yang sedang aktif.
+      // Karena setiap baris diberi text-align:right, mendorong scrollLeft
+      // ke posisi maksimum (scrollWidth) otomatis menampilkan ujung baris
+      // aktif tersebut — untuk baris manapun yang sedang diedit, tanpa
+      // perlu perhitungan pixel manual yang rawan meleset.
       requestAnimationFrame(() => {
         textarea.scrollLeft = textarea.scrollWidth;
       });
@@ -4090,6 +4171,18 @@ FORMAT KELUARAN (satu baris per murid):
       return null;
     }
 
+    let bulkMicRestartTimeout = null;
+
+    function resetBulkMicUI() {
+      const micIcon = document.getElementById('bulk-mic-icon');
+      const micBtn = document.getElementById('bulk-mic-btn');
+      const statusEl = document.getElementById('bulk-mic-status');
+      if (micIcon) micIcon.setAttribute('data-lucide', 'mic');
+      if (micBtn) micBtn.className = "p-2.5 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-all shadow-sm shrink-0";
+      if (statusEl) statusEl.classList.add('hidden');
+      lucide.createIcons();
+    }
+
     function toggleBulkVoiceInput() {
       if (!isSpeechRecognitionSupported()) {
         showToast('Fitur suara-ke-teks tidak didukung di browser/perangkat ini. Gunakan Chrome di Android.', 'warning');
@@ -4101,11 +4194,17 @@ FORMAT KELUARAN (satu baris per murid):
         showToast('Pilih & verifikasi murid terlebih dahulu sebelum menggunakan input suara.', 'warning');
         return;
       }
+      if (bulkMicRestartTimeout) { clearTimeout(bulkMicRestartTimeout); bulkMicRestartTimeout = null; }
       if (activeBulkSpeechRecognition) {
-        activeBulkSpeechRecognition.stop();
+        // FIX: paksa hentikan seketika (jangan tunggu onend, sering telat/tidak konsisten)
+        try { activeBulkSpeechRecognition.abort(); } catch (e) {}
+        activeBulkSpeechRecognition = null;
+        resetBulkMicUI();
         return;
       }
-      mulaiRekamSuaraBulk();
+      // FIX: beri jeda singkat sebelum membuka sesi rekam baru, agar mic
+      // sesi sebelumnya benar-benar terlepas dulu (mencegah gagal start diam-diam)
+      bulkMicRestartTimeout = setTimeout(() => { mulaiRekamSuaraBulk(); }, 300);
     }
 
     function mulaiRekamSuaraBulk() {
