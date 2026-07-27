@@ -825,40 +825,43 @@ FORMAT KELUARAN (satu baris per murid):
           <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm lg:col-span-2 flex flex-col justify-between">
             <div class="space-y-3">
               <div class="flex items-center justify-between">
-                <div>
+                <div class="flex items-center gap-2">
                   <h3 class="font-bold text-slate-800 text-sm">Payload</h3>
-                  <p class="text-[11px] text-slate-400 mt-0.5">Prompt + Jawaban Murid</p>
+                  <span id="payload-char-counter" class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">0 karakter</span>
                 </div>
                 <button onclick="generateAIEvaluationPayload()" class="text-[10px] text-indigo-600 font-bold hover:underline flex items-center gap-1">
                   <i data-lucide="refresh-cw" class="w-3 h-3"></i> Muat Ulang
                 </button>
               </div>
+              <p class="text-[11px] text-slate-400 -mt-1">Prompt + Jawaban Murid</p>
               <textarea id="ai-compiled-payload" rows="14" readonly onpaste="return false;" class="w-full bg-slate-50 border border-slate-100 rounded-xl p-4 text-xs font-mono select-all outline-none" style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;" placeholder="Memuat data..."></textarea>
             </div>
-            <div class="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100">
+            <div class="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100">
               <button onclick="selectAllCompiledText()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
-                <i data-lucide="copy" class="w-4 h-4"></i> Salin Semua Teks
+                <i data-lucide="copy" class="w-4 h-4"></i> Salin Teks
               </button>
               <a href="https://chatgpt.com" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
-                <i data-lucide="external-link" class="w-4 h-4"></i> Buka ChatGPT
+                <i data-lucide="external-link" class="w-4 h-4"></i> ChatGPT
+              </a>
+              <a href="https://claude.ai" target="_blank" class="bg-orange-600 hover:bg-orange-700 text-white font-semibold px-4 py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
+                <i data-lucide="external-link" class="w-4 h-4"></i> Claude AI
               </a>
             </div>
           </div>
         </div>
 
         <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
-          <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 pb-2 border-b border-slate-100">
-            <div>
-              <h3 class="font-bold text-slate-800 text-base">Tempel & Proses Hasil Penilaian AI</h3>
-            </div>
-            <button onclick="pasteAIResultFromClipboard()" class="shrink-0 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 transition-all border border-indigo-100">
-              <i data-lucide="clipboard-paste" class="w-4 h-4"></i> Paste dari Clipboard
-            </button>
+          <div class="pb-2 border-b border-slate-100">
+            <h3 class="font-bold text-slate-800 text-base">Tempel & Proses Hasil Penilaian AI</h3>
+            <p class="text-[11px] text-slate-400 mt-0.5">Jika hasil penilaian AI terpotong karena jawaban terlalu banyak/panjang, ketikkan saja <strong class="text-indigo-600">"sambungannya"</strong> di chat AI, lalu tempel lagi di sini — otomatis akan disambung ke bawah hasil sebelumnya.</p>
           </div>
           <textarea id="ai-pasted-result" rows="8" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs font-mono focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Khaliq Rahman;;52|Kontribusi nyata dijelaskan dengan detail.;;Menjaga hutan adat.;;48|Alasan integrasi teknologi cukup jelas.;;Monitoring real-time.&#10;Ratmawati;;45|Jawaban benar dan komprehensif.;;Ekosistem seimbang.;;40|Penjelasan agak umum.;;Prediksi dinamis."></textarea>
-          <div class="flex justify-end">
+          <div class="flex justify-end gap-2">
+            <button onclick="pasteAIResultFromClipboard()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold px-4 py-3 rounded-xl text-xs flex items-center gap-1.5 transition-all border border-indigo-100">
+              <i data-lucide="clipboard-paste" class="w-4 h-4"></i> Paste dari Clipboard
+            </button>
             <button onclick="saveAIGradingResult(event)" class="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-xl hover:bg-indigo-700 active:scale-95 transition-all shadow-md flex items-center gap-2">
-              <i data-lucide="check-circle" class="w-4 h-4"></i> Proses & Simpan Penilaian AI
+              <i data-lucide="check-circle" class="w-4 h-4"></i> Proses Penilaian
             </button>
           </div>
         </div>
@@ -1164,7 +1167,7 @@ FORMAT KELUARAN (satu baris per murid):
     // GANTI URL DI BAWAH INI dengan URL deployment Apps Script Anda
     // (hasil dari Deploy > Manage deployments, yang diakhiri /exec)
     // ============================================================
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxMXlpDRMnrkYBxD9tnhYdxHzsnYHmMrFSxosJ3EiwWmTk7vM8jxK1tDgYmjVSGU958/exec';
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyHv9D34JzQoM6SWIZbk9Eo3QHgE9eJyd_XfrGhs4rUGHxi_fcsSA_FAXzm7l1kw6Ok/exec';
 
     function gasFetch(fn, args) {
       return fetch(GAS_API_URL, {
@@ -2774,6 +2777,9 @@ FORMAT KELUARAN (satu baris per murid):
       }
       payloadTextarea.value = payload;
       payloadTextarea.dataset.lockedValue = payload;
+
+      const counterEl = document.getElementById('payload-char-counter');
+      if (counterEl) counterEl.textContent = `${payload.length.toLocaleString('id-ID')} karakter`;
     }
 
     async function selectAllCompiledText() {
@@ -2812,65 +2818,235 @@ FORMAT KELUARAN (satu baris per murid):
     }
 
     async function pasteAIResultFromClipboard() {
-      const textarea = document.getElementById('ai-pasted-result');
-      try {
-        if (navigator.clipboard && navigator.clipboard.readText) {
-          const text = await navigator.clipboard.readText();
-          if (text) { textarea.value = text; showToast('Teks berhasil ditempel!', 'success'); }
-          else showToast('Clipboard kosong.', 'warning');
-        } else throw new Error('Clipboard API tidak didukung.');
-      } catch (err) {
-        showToast('Gagal mengakses clipboard. Tempel manual dengan Ctrl+V / Cmd+V.', 'warning');
-        textarea.focus();
+  const textarea = document.getElementById('ai-pasted-result');
+  try {
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      const text = await navigator.clipboard.readText();
+      if (text) {
+        const existing = textarea.value.trim();
+        textarea.value = existing ? (existing + '\n' + text.trim()) : text;
+        showToast(existing ? 'Sambungan berhasil ditambahkan!' : 'Teks berhasil ditempel!', 'success');
+      } else showToast('Clipboard kosong.', 'warning');
+    } else throw new Error('Clipboard API tidak didukung.');
+  } catch (err) {
+    showToast('Gagal mengakses clipboard. Tempel manual dengan Ctrl+V / Cmd+V.', 'warning');
+    textarea.focus();
+  }
+}
+
+    // FIX: AI kadang menyisipkan enter di tengah teks "Alasan" meskipun sudah
+// diminta satu baris per murid. Jika langsung split('\n') mentah, baris murid
+// ke-2 dst bisa terpotong jadi beberapa baris palsu → gagal format → hanya
+// murid pertama yang berhasil disimpan. Fungsi ini menggabungkan kembali
+// baris "lanjutan" ke record murid sebelumnya sebelum diproses.
+function splitAIResultIntoRecords(rawText) {
+  const rawLines = rawText.split('\n');
+  const records = [];
+  rawLines.forEach(rawLine => {
+    const line = rawLine; // jangan trim dulu, biar spasi antar potongan tetap wajar
+    if (!line.trim()) return; // lewati baris kosong
+    // Dianggap AWAL record baru jika: mengandung ";;" DAN bagian sebelum ";;"
+    // pertama pendek & terlihat seperti "Nama" (bukan potongan kalimat panjang).
+    const isLikelyNewRecordStart = /;;/.test(line) &&
+      /^\s*(\d+[\.\)]\s*)?[^;]{1,80};;/.test(line);
+    if (isLikelyNewRecordStart || records.length === 0) {
+      records.push(line.trim());
+    } else {
+      // Anggap ini lanjutan (word-wrap) dari record murid sebelumnya
+      records[records.length - 1] += ' ' + line.trim();
+    }
+  });
+  return records.filter(l => l.trim());
+}
+
+function cariEntryEsaiByNama(esaiList, studentName, normalisasi) {
+  const targetNorm = normalisasi(studentName);
+
+  // 1. Cocok persis (setelah normalisasi)
+  let entry = esaiList.find(e => e && normalisasi(e.nama) === targetNorm);
+  if (entry) return entry;
+
+  // 2. Cocok sebagai substring (nama panggilan / nama depan saja)
+  entry = esaiList.find(e => {
+    if (!e || !e.nama) return false;
+    const enorm = normalisasi(e.nama);
+    return enorm.includes(targetNorm) || targetNorm.includes(enorm);
+  });
+  if (entry) return entry;
+
+  // 3. Pencocokan toleran typo (Levenshtein distance)
+  let bestEntry = null;
+  let bestDistance = Infinity;
+  esaiList.forEach(e => {
+    if (!e || !e.nama) return;
+    const enorm = normalisasi(e.nama);
+    const dist = levenshteinDistance(targetNorm, enorm);
+    const maxAllowed = Math.max(2, Math.floor(enorm.length * 0.25)); // toleransi ~25% karakter
+    if (dist <= maxAllowed && dist < bestDistance) {
+      bestDistance = dist;
+      bestEntry = e;
+    }
+  });
+  return bestEntry;
+}
+
+function levenshteinDistance(a, b) {
+  const matrix = [];
+  for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+  for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        );
       }
+    }
+  }
+  return matrix[b.length][a.length];
+}
+
+function saveAIGradingResult(event) {
+  const btn = event ? event.currentTarget : null;
+  const pastedResult = document.getElementById('ai-pasted-result').value.trim();
+  if (!pastedResult) { showToast('Silakan tempel respon AI terlebih dahulu.', 'warning'); return; }
+
+  const lines = splitAIResultIntoRecords(pastedResult);
+  const esaiList = Array.isArray(appData.esai) ? appData.esai : [];
+
+  const parsedEntries = [];
+  const skipped = []; // { line, alasan }
+
+  lines.forEach(line => {
+    const parts = line.split(';;').map(p => p.trim());
+    if (parts.length < 3) { skipped.push({ line, alasan: 'Format baris salah (kurang dari 3 bagian dipisah ";;")' }); return; }
+
+    const studentName = parts[0];
+    const restParts = parts.slice(1);
+    const nilaiPerSoal = [];
+    const feedbackPerSoal = [];
+    const kunciJawabanPerSoal = [];
+
+    for (let i = 0; i < restParts.length; i += 2) {
+      const sp = restParts[i] || '';
+      const kunci = restParts[i + 1] !== undefined ? restParts[i + 1] : '';
+      const pipeIdx = sp.indexOf('|');
+      let nilaiStr, alasan;
+      if (pipeIdx === -1) { nilaiStr = sp; alasan = 'Dinilai via AI.'; }
+      else { nilaiStr = sp.substring(0, pipeIdx).trim(); alasan = sp.substring(pipeIdx + 1).trim() || 'Dinilai via AI.'; }
+      const nilaiNum = parseFloat(nilaiStr);
+      nilaiPerSoal.push(isNaN(nilaiNum) ? 0 : nilaiNum);
+      feedbackPerSoal.push(alasan);
+      kunciJawabanPerSoal.push(kunci);
     }
 
-    function saveAIGradingResult(event) {
-      const pastedResult = document.getElementById('ai-pasted-result').value.trim();
-      if (!pastedResult) { showToast('Silakan tempel respon AI terlebih dahulu.', 'warning'); return; }
-      const lines = pastedResult.split('\n').filter(l => l.trim());
-      const esaiList = Array.isArray(appData.esai) ? appData.esai : [];
-      let successCount = 0;
-      lines.forEach(line => {
-        const parts = line.split(';;').map(p => p.trim()).filter((p, idx) => idx === 0 || p !== '');
-        if (parts.length < 3) return;
-        const studentName = parts[0];
-        const restParts = parts.slice(1);
-        const nilaiPerSoal = [];
-        const feedbackPerSoal = [];
-        const kunciJawabanPerSoal = [];
-        for (let i = 0; i < restParts.length; i += 2) {
-          const sp = restParts[i];
-          const kunci = restParts[i + 1] !== undefined ? restParts[i + 1] : '';
-          const pipeIdx = sp.indexOf('|');
-          let nilaiStr, alasan;
-          if (pipeIdx === -1) { nilaiStr = sp; alasan = 'Dinilai via AI.'; }
-          else { nilaiStr = sp.substring(0, pipeIdx).trim(); alasan = sp.substring(pipeIdx + 1).trim() || 'Dinilai via AI.'; }
-          const nilaiNum = parseFloat(nilaiStr);
-          nilaiPerSoal.push(isNaN(nilaiNum) ? 0 : nilaiNum);
-          feedbackPerSoal.push(alasan);
-          kunciJawabanPerSoal.push(kunci);
-        }
-        if (!studentName || nilaiPerSoal.length === 0) return;
-        const entry = esaiList.find(r => r && r.nama && r.nama.toLowerCase().trim() === studentName.toLowerCase().trim());
-        if (!entry) return;
-        let nilaiTotal = 0;
-        for (let i = 0; i < nilaiPerSoal.length; i++) nilaiTotal += (nilaiPerSoal[i] || 0);
-        nilaiTotal = parseFloat(nilaiTotal.toFixed(2));
-        entry.nilai = nilaiTotal; entry.sudahDinilai = true; entry.feedback = feedbackPerSoal.join(' | ');
-        entry.nilaiPerSoal = nilaiPerSoal; entry.feedbackPerSoal = feedbackPerSoal;
-        entry.kunciJawabanPerSoal = kunciJawabanPerSoal;
-        successCount++;
-        if (isGAS) google.script.run.updatePenilaianEsaiAI({ nama: entry.nama, nilaiTotal, feedbackRingkas: entry.feedback, nilaiPerSoal, feedbackPerSoal, kunciJawabanPerSoal });
-      });
-      if (successCount > 0) {
+    if (!studentName || nilaiPerSoal.length === 0) { skipped.push({ line, alasan: 'Nama murid atau nilai tidak terbaca' }); return; }
+
+    // FIX: normalisasi nama sebelum dibandingkan — buang nomor urut ("1. "),
+    // markdown bold (**), tanda kutip, dan spasi ganda, supaya pencocokan
+    // nama tidak gagal hanya karena format tambahan dari AI.
+    const normalisasi = (s) => s
+  .replace(/^\s*\d+[\.\)]\s*/, '')       // buang "1. " atau "1) " di depan
+  .replace(/\*\*/g, '')                  // buang markdown bold
+  .replace(/["'"]/g, '')                 // buang tanda kutip
+  .replace(/\s*\([^)]*\)\s*$/, '')       // buang nama panggilan dalam kurung di akhir, mis. "(Amira)"
+  .replace(/\s+/g, ' ')                  // rapikan spasi ganda
+  .trim()
+  .toLowerCase();
+
+const entry = cariEntryEsaiByNama(esaiList, studentName, normalisasi);
+
+if (!entry) {
+  skipped.push({ line, alasan: `Nama "${studentName}" tidak ditemukan di daftar jawaban esai yang masuk (sudah dicoba: cocok persis, nama panggilan, & pencocokan toleran typo)` });
+  return;
+}
+
+    let nilaiTotal = 0;
+    for (let i = 0; i < nilaiPerSoal.length; i++) nilaiTotal += (nilaiPerSoal[i] || 0);
+    nilaiTotal = parseFloat(nilaiTotal.toFixed(2));
+
+    parsedEntries.push({ entry, studentName, nilaiTotal, nilaiPerSoal, feedbackPerSoal, kunciJawabanPerSoal });
+  });
+
+  // Tampilkan baris yang dilewati supaya kelihatan alasannya
+  if (skipped.length > 0) {
+    const daftarSkip = skipped.map(s => `• ${s.alasan}\n   (baris: "${s.line.substring(0, 60)}${s.line.length > 60 ? '...' : ''}")`).join('\n\n');
+    triggerCustomModal(
+      `${skipped.length} Baris Dilewati`,
+      'Beberapa baris tidak bisa diproses. Lihat detail di console (F12) untuk isi lengkapnya.',
+      'alert-triangle',
+      null,
+      'indigo'
+    );
+    console.warn('Baris yang dilewati saat Proses Penilaian AI:\n' + daftarSkip);
+  }
+
+  if (parsedEntries.length === 0) {
+    showToast('Tidak ada nama murid yang cocok. Cek console (F12) untuk detail.', 'error');
+    return;
+  }
+
+  if (btn) setButtonLoading(btn, true, `Menyimpan 0/${parsedEntries.length}...`);
+  let successCount = 0, failCount = 0, index = 0;
+  const failedNames = [];
+
+  function simpanSatuPersatu() {
+    if (index >= parsedEntries.length) {
+      if (btn) setButtonLoading(btn, false);
+      if (successCount > 0) document.getElementById('ai-pasted-result').value = '';
+      if (failCount === 0) {
         showToast(`Berhasil menyimpan nilai ${successCount} murid!`, 'success');
-        document.getElementById('ai-pasted-result').value = '';
-        buildUI(); setMainNav('MURID'); setSubNav('nilai');
       } else {
-        showToast('Tidak ada nama murid yang cocok. Pastikan format benar.', 'error');
+        showToast(`Selesai: ${successCount} berhasil, ${failCount} gagal (${failedNames.join(', ')}).`, 'warning');
       }
+      if (isGAS) loadRekapNilaiGAS(); else buildUI();
+      setMainNav('MURID'); setSubNav('nilai');
+      return;
     }
+
+    const item = parsedEntries[index];
+    if (btn) setButtonLoading(btn, true, `Menyimpan ${index + 1}/${parsedEntries.length}...`);
+
+    const payload = {
+      nama: item.entry.nama,
+      nilaiTotal: item.nilaiTotal,
+      feedbackRingkas: item.feedbackPerSoal.join(' | '),
+      nilaiPerSoal: item.nilaiPerSoal,
+      feedbackPerSoal: item.feedbackPerSoal,
+      kunciJawabanPerSoal: item.kunciJawabanPerSoal
+    };
+
+    if (isGAS) {
+      google.script.run
+        .withSuccessHandler(res => {
+          if (res && res.success) { successCount++; }
+          else { failCount++; failedNames.push(item.studentName + (res && res.error ? ` (${res.error})` : '')); }
+          index++; simpanSatuPersatu();
+        })
+        .withFailureHandler(err => {
+          failCount++;
+          failedNames.push(item.studentName + (err && err.message ? ` (${err.message})` : ''));
+          index++; simpanSatuPersatu();
+        })
+        .updatePenilaianEsaiAI(payload);
+    } else {
+      item.entry.nilai = item.nilaiTotal;
+      item.entry.sudahDinilai = true;
+      item.entry.feedback = payload.feedbackRingkas;
+      item.entry.nilaiPerSoal = item.nilaiPerSoal;
+      item.entry.feedbackPerSoal = item.feedbackPerSoal;
+      item.entry.kunciJawabanPerSoal = item.kunciJawabanPerSoal;
+      successCount++;
+      index++; simpanSatuPersatu();
+    }
+  }
+
+  simpanSatuPersatu();
+}
 
     // ============================================================
     // FIX: Halaman Awal Menu Murid — slide toggle Jawaban PG / Jawaban Esai
