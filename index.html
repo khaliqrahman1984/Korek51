@@ -1203,7 +1203,7 @@ FORMAT KELUARAN (satu baris per murid):
     // GANTI URL DI BAWAH INI dengan URL deployment Apps Script Anda
     // (hasil dari Deploy > Manage deployments, yang diakhiri /exec)
     // ============================================================
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyPtWlVNEI3VrGdbUcFnUB1TBteuWLaJ4FBw8pZUA7nFk0bDka298FoNfbAX2q_FYNz/exec';
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyTirnJ9D6-2pHv8DXzuqMjrhMGofHrA_7oETR-d14eoOYOHncbOHuL3vjje_BBkM69/exec';
 
     function gasFetch(fn, args) {
       return fetch(GAS_API_URL, {
@@ -4407,7 +4407,7 @@ if (!entry) {
       };
 
       recognition.onend = () => {
-        if (micBtn) micBtn.className = "absolute top-3 right-3 p-2 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-all shadow-sm";
+        if (micBtn) micBtn.className = "p-2 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-all shadow-sm";
         setLucideIcon(micBtn, 'mic');
         if (statusEl) statusEl.classList.add('hidden');
         activeSpeechRecognition = null;
@@ -4705,7 +4705,7 @@ if (!entry) {
       const statusEl = document.getElementById('bulk-mic-status');
 
       recognition.onstart = () => {
-        if (micBtn) micBtn.className = "absolute top-3 right-3 p-2 rounded-full bg-rose-600 text-white hover:bg-rose-700 transition-all shadow-sm animate-pulse";
+        if (micBtn) micBtn.className = "p-2.5 rounded-full bg-rose-600 text-white hover:bg-rose-700 transition-all shadow-sm animate-pulse shrink-0";
         setLucideIcon(micBtn, 'square');
         if (statusEl) statusEl.classList.remove('hidden');
       };
