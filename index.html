@@ -378,6 +378,11 @@
                   <option value="1.5">1.5x</option>
                   <option value="2">2x</option>
                 </select>
+                <div class="flex items-center gap-1 w-14" title="Nada Suara: Berat (pria) - Jempreng (wanita)">
+                  <span class="text-[9px]">🔉</span>
+                  <input type="range" id="bulk-tts-pitch" min="0" max="2" step="0.1" value="1" class="w-6 h-2 accent-indigo-600 cursor-pointer">
+                  <span class="text-[9px]">🔊</span>
+                </div>
               </div>
             </div>
           </div>
@@ -807,6 +812,11 @@
                     <option value="1.5">1.5x</option>
                     <option value="2">2x</option>
                   </select>
+                  <div class="flex items-center gap-1 w-14" title="Nada Suara: Berat (pria) - Jempreng (wanita)">
+                    <span class="text-[9px]">🔉</span>
+                    <input type="range" id="tts-pitch-guru-esai" min="0" max="2" step="0.1" value="1" class="w-6 h-2 accent-indigo-600 cursor-pointer">
+                    <span class="text-[9px]">🔊</span>
+                  </div>
                 </div>
               </div>
               <p id="mic-status-guru-esai" class="hidden text-[11px] font-semibold text-rose-600 flex items-center gap-1.5">
@@ -1203,7 +1213,7 @@ FORMAT KELUARAN (satu baris per murid):
     // GANTI URL DI BAWAH INI dengan URL deployment Apps Script Anda
     // (hasil dari Deploy > Manage deployments, yang diakhiri /exec)
     // ============================================================
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyTirnJ9D6-2pHv8DXzuqMjrhMGofHrA_7oETR-d14eoOYOHncbOHuL3vjje_BBkM69/exec';
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwwFtciMJhTdY8ffQO8F4_4NUk3Hajz4SPUjrksIRGc95m6gTYDINSqP6_yLEirkhzJ/exec';
 
     function gasFetch(fn, args) {
       return fetch(GAS_API_URL, {
@@ -2534,6 +2544,11 @@ FORMAT KELUARAN (satu baris per murid):
                 <option value="1.5">1.5x</option>
                 <option value="2">2x</option>
               </select>
+              <div class="flex items-center gap-1 w-14" title="Nada Suara: Berat (pria) - Jempreng (wanita)">
+                <span class="text-[9px]">🔉</span>
+                <input type="range" id="tts-pitch-${idx}" min="0" max="2" step="0.1" value="1" class="w-6 h-2 accent-indigo-600 cursor-pointer">
+                <span class="text-[9px]">🔊</span>
+              </div>
             </div>
           </div>
           <p id="mic-status-${idx}" class="hidden text-[11px] font-semibold text-rose-600 flex items-center gap-1.5">
@@ -4464,7 +4479,7 @@ if (!entry) {
       window.speechSynthesis.onvoiceschanged = primeVoiceList;
     }
 
-    function applyIndonesianVoice(utterance) {
+    function applyIndonesianVoice(utterance, pitchValue) {
       primeVoiceList();
       if (cachedIndonesianVoice) {
         utterance.voice = cachedIndonesianVoice;
@@ -4475,6 +4490,9 @@ if (!entry) {
           showToast('Suara Bahasa Indonesia tidak tersedia di perangkat ini, memakai suara default (aksen mungkin kurang tepat).', 'warning');
         }
       }
+      // Pitch 0 = suara berat/rendah (pria), 2 = suara tinggi/jempreng (wanita), 1 = normal
+      const p = parseFloat(pitchValue);
+      utterance.pitch = isNaN(p) ? 1 : Math.min(2, Math.max(0, p));
     }
 
     // ============================================================
@@ -4515,6 +4533,8 @@ if (!entry) {
       const btn = document.getElementById(`tts-btn-${idx}`);
       const rateSelect = document.getElementById(`tts-rate-${idx}`);
       const rate = rateSelect ? parseFloat(rateSelect.value) || 1 : 1;
+      const pitchSlider = document.getElementById(`tts-pitch-${idx}`);
+      const pitch = pitchSlider ? parseFloat(pitchSlider.value) : 1;
 
       if (window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
@@ -4524,7 +4544,7 @@ if (!entry) {
       }
 
       const utterance = new SpeechSynthesisUtterance(teks);
-      applyIndonesianVoice(utterance);
+      applyIndonesianVoice(utterance, pitch);
       utterance.rate = rate;
       utterance.onstart = () => {
         if (btn) { btn.classList.remove('bg-slate-100', 'text-slate-600'); btn.classList.add('bg-rose-600', 'text-white', 'animate-pulse'); }
@@ -4619,6 +4639,8 @@ if (!entry) {
       const btn = document.getElementById('tts-btn-guru-esai');
       const rateSelect = document.getElementById('tts-rate-guru-esai');
       const rate = rateSelect ? parseFloat(rateSelect.value) || 1 : 1;
+      const pitchSlider = document.getElementById('tts-pitch-guru-esai');
+      const pitch = pitchSlider ? parseFloat(pitchSlider.value) : 1;
 
       if (window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
@@ -4628,7 +4650,7 @@ if (!entry) {
       }
 
       const utterance = new SpeechSynthesisUtterance(teks);
-      applyIndonesianVoice(utterance);
+      applyIndonesianVoice(utterance, pitch);
       utterance.rate = rate;
       utterance.onstart = () => {
         if (btn) { btn.classList.remove('bg-slate-100', 'text-slate-600'); btn.classList.add('bg-rose-600', 'text-white', 'animate-pulse'); }
@@ -4770,6 +4792,8 @@ if (!entry) {
       const btn = document.getElementById('bulk-tts-btn');
       const rateSelect = document.getElementById('bulk-tts-rate');
       const rate = rateSelect ? parseFloat(rateSelect.value) || 1 : 1;
+      const pitchSlider = document.getElementById('bulk-tts-pitch');
+      const pitch = pitchSlider ? parseFloat(pitchSlider.value) : 1;
 
       if (window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
@@ -4779,7 +4803,7 @@ if (!entry) {
       }
 
       const utterance = new SpeechSynthesisUtterance(teks);
-      applyIndonesianVoice(utterance);
+      applyIndonesianVoice(utterance, pitch);
       utterance.rate = rate;
       utterance.onstart = () => {
         if (btn) { btn.classList.remove('bg-slate-100', 'text-slate-600'); btn.classList.add('bg-rose-600', 'text-white', 'animate-pulse'); }
