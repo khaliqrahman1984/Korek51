@@ -362,9 +362,23 @@
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Mata Pelajaran</p>
                 <p id="mapel-display-bulk" class="mapel-glow text-base">-</p>
               </div>
-              <button type="button" id="bulk-mic-btn" onclick="toggleBulkVoiceInput()" title="Bicara untuk mengisi jawaban PG" class="p-2.5 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-all shadow-sm shrink-0">
-                <i data-lucide="mic" class="w-4 h-4" id="bulk-mic-icon"></i>
-              </button>
+              <div class="flex flex-col items-center gap-1 shrink-0">
+                <button type="button" id="bulk-mic-btn" onclick="toggleBulkVoiceInput()" title="Bicara untuk mengisi jawaban PG" class="p-2.5 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-all shadow-sm">
+                  <i data-lucide="mic" class="w-4 h-4" id="bulk-mic-icon"></i>
+                </button>
+                <button type="button" id="bulk-tts-btn" onclick="bacaInstruksiBulk()" title="Dengarkan instruksi & mata pelajaran" class="p-2 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all shadow-sm">
+                  <i data-lucide="volume-2" class="w-4 h-4" id="bulk-tts-icon"></i>
+                </button>
+                <select id="bulk-tts-rate" title="Kecepatan Membaca" class="text-[9px] font-bold border border-slate-200 rounded-lg px-1 py-0.5 bg-white outline-none w-12 text-center">
+                  <option value="0.25">0.25x</option>
+                  <option value="0.5">0.5x</option>
+                  <option value="0.75">0.75x</option>
+                  <option value="1" selected>1x</option>
+                  <option value="1.25">1.25x</option>
+                  <option value="1.5">1.5x</option>
+                  <option value="2">2x</option>
+                </select>
+              </div>
             </div>
           </div>
           <textarea id="bulk-textbox" class="hidden bulk-textarea" wrap="off" readonly inputmode="none" oninput="onBulkInput(this)" onkeydown="onBulkKeyDown(event)" spellcheck="false"></textarea>
@@ -588,9 +602,9 @@
             </div>
             <div>
               <div class="flex items-center justify-between mb-2">
-                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Belum Mengirim Jawaban Esai</h4>
-                <span id="belum-esai-count" class="px-2 py-0.5 text-[10px] font-extrabold bg-rose-100 text-rose-700 rounded-full">0</span>
-              </div>
+  <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Belum Mengirim Jawaban Esai</h4>
+  <span id="belum-esai-count" class="px-2 py-0.5 text-[10px] font-extrabold bg-sky-100 text-sky-700 rounded-full">0</span>
+</div>
               <div id="belum-esai-list" class="space-y-1 max-h-48 overflow-y-auto"></div>
             </div>
           </div>
@@ -857,7 +871,7 @@ FORMAT KELUARAN (satu baris per murid):
           </div>
           <textarea id="ai-pasted-result" rows="8" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs font-mono focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Khaliq Rahman;;52|Kontribusi nyata dijelaskan dengan detail.;;Menjaga hutan adat.;;48|Alasan integrasi teknologi cukup jelas.;;Monitoring real-time.&#10;Ratmawati;;45|Jawaban benar dan komprehensif.;;Ekosistem seimbang.;;40|Penjelasan agak umum.;;Prediksi dinamis."></textarea>
           <div class="flex justify-end gap-2">
-            <button onclick="pasteAIResultFromClipboard()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold px-4 py-3 rounded-xl text-xs flex items-center gap-1.5 transition-all border border-indigo-100">
+            <button onclick="pasteAIResultFromClipboard()" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-3 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md">
               <i data-lucide="clipboard-paste" class="w-4 h-4"></i> Paste dari Clipboard
             </button>
             <button onclick="saveAIGradingResult(event)" class="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-xl hover:bg-indigo-700 active:scale-95 transition-all shadow-md flex items-center gap-2">
@@ -1167,7 +1181,7 @@ FORMAT KELUARAN (satu baris per murid):
     // GANTI URL DI BAWAH INI dengan URL deployment Apps Script Anda
     // (hasil dari Deploy > Manage deployments, yang diakhiri /exec)
     // ============================================================
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyHv9D34JzQoM6SWIZbk9Eo3QHgE9eJyd_XfrGhs4rUGHxi_fcsSA_FAXzm7l1kw6Ok/exec';
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwkROqyhS0SdwKVwLf5PEC3XJu2XdYe4BOe1mMmu8F83K487p5F6XfE6idhKwveK8uZ/exec';
 
     function gasFetch(fn, args) {
       return fetch(GAS_API_URL, {
@@ -2470,9 +2484,23 @@ FORMAT KELUARAN (satu baris per murid):
           <p class="text-sm text-slate-700 font-semibold leading-relaxed whitespace-pre-wrap">${q}</p>
           <div class="relative">
             <textarea id="esai-answer-field-${idx}" oninput="autoExpandTextarea(this)" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 pr-14 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium" placeholder="Tuliskan jawaban lengkap Anda untuk Soal ${idx + 1}..."></textarea>
-            <button type="button" id="mic-btn-${idx}" onclick="toggleVoiceInput(${idx})" title="Bicara untuk mengisi jawaban (Bahasa Indonesia)" class="absolute top-3 right-3 p-2 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-all shadow-sm">
-              <i data-lucide="mic" class="w-4 h-4" id="mic-icon-${idx}"></i>
-            </button>
+            <div class="absolute top-3 right-3 flex flex-col items-center gap-1.5">
+              <button type="button" id="mic-btn-${idx}" onclick="toggleVoiceInput(${idx})" title="Bicara untuk mengisi jawaban (Bahasa Indonesia)" class="p-2 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-all shadow-sm">
+                <i data-lucide="mic" class="w-4 h-4" id="mic-icon-${idx}"></i>
+              </button>
+              <button type="button" id="tts-btn-${idx}" onclick="bacaSoalEsai(${idx})" title="Dengarkan soal ini dibacakan" class="p-2 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all shadow-sm">
+                <i data-lucide="volume-2" class="w-4 h-4" id="tts-icon-${idx}"></i>
+              </button>
+              <select id="tts-rate-${idx}" title="Kecepatan Membaca" class="text-[9px] font-bold border border-slate-200 rounded-lg px-1 py-0.5 bg-white outline-none w-12 text-center">
+                <option value="0.25">0.25x</option>
+                <option value="0.5">0.5x</option>
+                <option value="0.75">0.75x</option>
+                <option value="1" selected>1x</option>
+                <option value="1.25">1.25x</option>
+                <option value="1.5">1.5x</option>
+                <option value="2">2x</option>
+              </select>
+            </div>
           </div>
           <p id="mic-status-${idx}" class="hidden text-[11px] font-semibold text-rose-600 flex items-center gap-1.5">
             <span class="w-2 h-2 bg-rose-600 rounded-full animate-pulse"></span> Sedang mendengarkan... bicara sekarang
@@ -4363,6 +4391,100 @@ if (!entry) {
     }
 
     // ============================================================
+    // HELPER: Ubah teks agar dibaca dengan EJAAN BAHASA INDONESIA
+    // (huruf tunggal A-E & singkatan umum sering dibaca lafal Inggris
+    // oleh mesin TTS, fungsi ini memaksa ejaan Indonesia)
+    // ============================================================
+    function ubahTeksUntukEjaanTTS(teks) {
+      if (!teks) return teks;
+      let hasil = String(teks);
+      // Ejaan singkatan umum
+      hasil = hasil.replace(/\bPG\b/g, 'Pe Ge');
+      hasil = hasil.replace(/\bLJK\b/g, 'El Je Ka');
+      hasil = hasil.replace(/\bAI\b/g, 'A I');
+      // Ejaan huruf pilihan ganda tunggal (A-E) agar dibaca ejaan Indonesia
+      const ejaanHuruf = { A: 'A', B: 'Beh', C: 'Ceh', D: 'Deh', E: 'Eh' };
+      hasil = hasil.replace(/\b([A-Ea-e])\b/g, (m, huruf) => ejaanHuruf[huruf.toUpperCase()] || huruf);
+      return hasil;
+    }
+
+    // ============================================================
+    // HELPER: Pilih voice Bahasa Indonesia secara eksplisit
+    // (utterance.lang saja tidak cukup — browser bisa fallback ke voice
+    // Inggris jika tidak menemukan voice id-ID yang cocok. Kita cari
+    // dan kunci voice-nya secara manual di sini.)
+    // ============================================================
+    let cachedIndonesianVoice = null;
+    let voiceListReady = false;
+
+    function primeVoiceList() {
+      if (!('speechSynthesis' in window)) return;
+      const voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length > 0) {
+        cachedIndonesianVoice = voices.find(v => v.lang && v.lang.toLowerCase() === 'id-id')
+          || voices.find(v => v.lang && v.lang.toLowerCase().startsWith('id'))
+          || null;
+        voiceListReady = true;
+      }
+    }
+
+    if ('speechSynthesis' in window) {
+      primeVoiceList();
+      window.speechSynthesis.onvoiceschanged = primeVoiceList;
+    }
+
+    function applyIndonesianVoice(utterance) {
+      primeVoiceList();
+      if (cachedIndonesianVoice) {
+        utterance.voice = cachedIndonesianVoice;
+        utterance.lang = cachedIndonesianVoice.lang;
+      } else {
+        utterance.lang = 'id-ID';
+        if (voiceListReady) {
+          showToast('Suara Bahasa Indonesia tidak tersedia di perangkat ini, memakai suara default (aksen mungkin kurang tepat).', 'warning');
+        }
+      }
+    }
+
+    // ============================================================
+    // TEXT-TO-SPEECH: BACA SOAL ESAI
+    // ============================================================
+    function bacaSoalEsai(idx) {
+      if (!('speechSynthesis' in window)) { showToast('Fitur text-to-speech tidak didukung di browser ini.', 'warning'); return; }
+      const listSoal = Array.isArray(appData.config.soalEsaiList) ? appData.config.soalEsaiList : [];
+      const teksAsli = listSoal[idx];
+      if (!teksAsli) { showToast('Soal tidak ditemukan.', 'warning'); return; }
+      const teks = ubahTeksUntukEjaanTTS(teksAsli);
+      const btn = document.getElementById(`tts-btn-${idx}`);
+      const icon = document.getElementById(`tts-icon-${idx}`);
+      const rateSelect = document.getElementById(`tts-rate-${idx}`);
+      const rate = rateSelect ? parseFloat(rateSelect.value) || 1 : 1;
+
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        if (icon) icon.setAttribute('data-lucide', 'volume-2');
+        if (btn) { btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse'); btn.classList.add('bg-slate-100', 'text-slate-600'); }
+        lucide.createIcons();
+        return;
+      }
+
+      const utterance = new SpeechSynthesisUtterance(teks);
+      applyIndonesianVoice(utterance);
+      utterance.rate = rate;
+      utterance.onstart = () => {
+        if (icon) icon.setAttribute('data-lucide', 'square');
+        if (btn) { btn.classList.remove('bg-slate-100', 'text-slate-600'); btn.classList.add('bg-rose-600', 'text-white', 'animate-pulse'); }
+        lucide.createIcons();
+      };
+      utterance.onend = () => {
+        if (icon) icon.setAttribute('data-lucide', 'volume-2');
+        if (btn) { btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse'); btn.classList.add('bg-slate-100', 'text-slate-600'); }
+        lucide.createIcons();
+      };
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // ============================================================
     // SUARA KE TEKS UNTUK LJK - BULK
     // Kata penghubung "dan" dipakai untuk memisahkan tiap jawaban.
     // Contoh ucapan: "A dan B dan Kosong dan C dan D"
@@ -4472,6 +4594,54 @@ if (!entry) {
       } catch (e) {
         showToast('Gagal memulai perekaman suara.', 'error');
       }
+    }
+
+    // ============================================================
+    // TEXT-TO-SPEECH: BACA NAMA MURID & JAWABAN (BULK)
+    // Membaca nama murid yang sedang aktif lalu jawabannya per nomor,
+    // mis: "Vander Lex, 1 A, 2 C, 3 B, dan seterusnya"
+    // ============================================================
+    function bacaInstruksiBulk() {
+      if (!('speechSynthesis' in window)) { showToast('Fitur text-to-speech tidak didukung di browser ini.', 'warning'); return; }
+      const textarea = document.getElementById('bulk-textbox');
+      const maxLen = appData.config.jumlahSoal || 5;
+      const { line: activeLine } = getActiveBulkLineInfo(textarea);
+      const { nama, jawaban } = parseBulkLine(activeLine);
+      if (!nama) { showToast('Pilih murid terlebih dahulu.', 'warning'); return; }
+      if (!jawaban || !jawaban.trim()) { showToast(`Jawaban ${nama} masih kosong.`, 'warning'); return; }
+      const bagianJawaban = [];
+      for (let i = 0; i < maxLen; i++) {
+        const ch = (jawaban[i] || '').toUpperCase().trim();
+        bagianJawaban.push(`${i + 1} ${ch ? ch : 'Kosong'}`);
+      }
+      const teks = ubahTeksUntukEjaanTTS(`${nama}, ${bagianJawaban.join(', ')}.`);
+      const btn = document.getElementById('bulk-tts-btn');
+      const icon = document.getElementById('bulk-tts-icon');
+      const rateSelect = document.getElementById('bulk-tts-rate');
+      const rate = rateSelect ? parseFloat(rateSelect.value) || 1 : 1;
+
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        if (icon) icon.setAttribute('data-lucide', 'volume-2');
+        if (btn) { btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse'); btn.classList.add('bg-slate-100', 'text-slate-600'); }
+        lucide.createIcons();
+        return;
+      }
+
+      const utterance = new SpeechSynthesisUtterance(teks);
+      applyIndonesianVoice(utterance);
+      utterance.rate = rate;
+      utterance.onstart = () => {
+        if (icon) icon.setAttribute('data-lucide', 'square');
+        if (btn) { btn.classList.remove('bg-slate-100', 'text-slate-600'); btn.classList.add('bg-rose-600', 'text-white', 'animate-pulse'); }
+        lucide.createIcons();
+      };
+      utterance.onend = () => {
+        if (icon) icon.setAttribute('data-lucide', 'volume-2');
+        if (btn) { btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse'); btn.classList.add('bg-slate-100', 'text-slate-600'); }
+        lucide.createIcons();
+      };
+      window.speechSynthesis.speak(utterance);
     }
 
     function kirimJawabanEsai(event) {
@@ -4636,30 +4806,35 @@ if (!entry) {
       const belumEsai = sortBelumMengerjakanList(filteredMurid.filter(m => !namaEsai.has(norm(m.nama))));
 
       if (countPGEl) countPGEl.textContent = belumPG.length;
-      if (countEsaiEl) countEsaiEl.textContent = belumEsai.length;
+if (countEsaiEl) countEsaiEl.textContent = belumEsai.length;
 
-      const renderList = (container, arr) => {
-        if (arr.length === 0) {
-          container.innerHTML = '<p class="text-[11px] text-emerald-500 text-center py-3">🎉 Semua murid sudah mengirim jawaban.</p>';
-          return;
-        }
-        container.innerHTML = '';
-        const urutAbjad = sortModeBelumMengerjakan === 2;
-        arr.forEach(m => {
-          const div = document.createElement('div');
-          div.className = 'flex items-center justify-between px-3 py-1.5 bg-rose-50 rounded-lg border border-rose-100';
-          const sekolahKelas = `${m.sekolah || ''} ${m.kelas ? '| ' + m.kelas : ''}`;
-          if (urutAbjad) {
-            div.innerHTML = `<span class="text-xs font-semibold text-slate-700">${m.nama}</span><span class="text-[10px] text-slate-400">${sekolahKelas}</span>`;
-          } else {
-            div.innerHTML = `<span class="text-[10px] font-semibold text-slate-500">${sekolahKelas}</span><span class="text-xs font-bold text-slate-700">${m.nama}</span>`;
-          }
-          container.appendChild(div);
-        });
-      };
+const renderList = (container, arr, colorTheme) => {
+  if (arr.length === 0) {
+    container.innerHTML = '<p class="text-[11px] text-emerald-500 text-center py-3">🎉 Semua murid sudah mengirim jawaban.</p>';
+    return;
+  }
+  container.innerHTML = '';
+  const urutAbjad = sortModeBelumMengerjakan === 2;
 
-      renderList(listPGEl, belumPG);
-      renderList(listEsaiEl, belumEsai);
+  // Mengubah pengecekan theme menjadi 'sky'
+  const bgCls = colorTheme === 'sky' ? 'bg-sky-50 border-sky-100' : 'bg-rose-50 border-rose-100';
+
+  arr.forEach(m => {
+    const div = document.createElement('div');
+    div.className = `flex items-center justify-between px-3 py-1.5 ${bgCls} rounded-lg border`;
+    const sekolahKelas = `${m.sekolah || ''} ${m.kelas ? '| ' + m.kelas : ''}`;
+    if (urutAbjad) {
+      div.innerHTML = `<span class="text-xs font-semibold text-slate-700">${m.nama}</span><span class="text-[10px] text-slate-400">${sekolahKelas}</span>`;
+    } else {
+      div.innerHTML = `<span class="text-[10px] font-semibold text-slate-500">${sekolahKelas}</span><span class="text-xs font-bold text-slate-700">${m.nama}</span>`;
+    }
+    container.appendChild(div);
+  });
+};
+
+renderList(listPGEl, belumPG, 'rose');
+// Ubah argumen warna di bawah ini menjadi 'sky'
+renderList(listEsaiEl, belumEsai, 'sky');
     }
 
     function renderTabelNilai() {
@@ -4723,26 +4898,6 @@ if (!entry) {
       renderMuridBelumMengerjakan();
       lucide.createIcons();
     }
-
-    const renderList = (container, arr) => {
-        if (arr.length === 0) {
-          container.innerHTML = '<p class="text-[11px] text-emerald-500 text-center py-3">🎉 Semua murid sudah mengirim jawaban.</p>';
-          return;
-        }
-        container.innerHTML = '';
-        const urutAbjad = sortModeBelumMengerjakan === 2;
-        arr.forEach(m => {
-          const div = document.createElement('div');
-          div.className = 'flex items-center justify-between px-3 py-1.5 bg-rose-50 rounded-lg border border-rose-100';
-          const sekolahKelas = `${m.sekolah || ''} ${m.kelas ? '| ' + m.kelas : ''}`;
-          if (urutAbjad) {
-            div.innerHTML = `<span class="text-xs font-semibold text-slate-700">${m.nama}</span><span class="text-[10px] text-slate-400">${sekolahKelas}</span>`;
-          } else {
-            div.innerHTML = `<span class="text-[10px] font-semibold text-slate-500">${sekolahKelas}</span><span class="text-xs font-bold text-slate-700">${m.nama}</span>`;
-          }
-          container.appendChild(div);
-        });
-      };
 
     function renderTabelGabungan() {
       const tbody = document.getElementById('tbl-gabungan-body');
@@ -5428,22 +5583,37 @@ if (!entry) {
           sheetData.push([`Kunci ${qi+1}: ${kunciSoal || '-'}`]);
         });
         sheetData.push([]);
-        sheetData.push(['No', 'Nama', 'No Soal', 'Jawaban', 'Nilai', 'Alasan Penilaian']);
+        sheetData.push(['No', 'Nama', 'Total Nilai Esai', 'No Soal', 'Jawaban', 'Nilai per Soal', 'Alasan Penilaian']);
+        const esaiMerges = [];
         esaiList.forEach((r, idx) => {
           if (!r) return;
           const sudah = !!r.sudahDinilai && r.nilai !== null;
+          const totalNilai = sudah ? parseFloat(r.nilai).toFixed(2) : '-';
           const nilaiPerSoal = Array.isArray(r.nilaiPerSoal) ? r.nilaiPerSoal : [];
           const feedback = Array.isArray(r.feedbackPerSoal) ? r.feedbackPerSoal : [];
+          const jumlahBaris = soalList.length || 1;
+          const startRow = sheetData.length;
           soalList.forEach((q, qi) => {
             const jwb = r.jawaban ? getStudentAnswerForSpecificQuestion(r.jawaban, qi) : '-';
             const nilai = sudah && nilaiPerSoal[qi] !== undefined ? nilaiPerSoal[qi] : '-';
             const fb = feedback[qi] || '-';
-            sheetData.push([idx+1, r.nama||'', qi+1, jwb, nilai, fb]);
+            sheetData.push([
+              qi === 0 ? idx+1 : '',
+              qi === 0 ? (r.nama||'') : '',
+              qi === 0 ? totalNilai : '',
+              qi+1, jwb, nilai, fb
+            ]);
           });
+          if (jumlahBaris > 1) {
+            esaiMerges.push({ s: { r: startRow, c: 0 }, e: { r: startRow + jumlahBaris - 1, c: 0 } });
+            esaiMerges.push({ s: { r: startRow, c: 1 }, e: { r: startRow + jumlahBaris - 1, c: 1 } });
+            esaiMerges.push({ s: { r: startRow, c: 2 }, e: { r: startRow + jumlahBaris - 1, c: 2 } });
+          }
         });
 
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.aoa_to_sheet(sheetData);
+        ws['!merges'] = (ws['!merges'] || []).concat(esaiMerges);
         XLSX.utils.book_append_sheet(wb, ws, 'Analisis Esai');
         XLSX.writeFile(wb, `Analisis_Esai_${sanitizeFilenamePart(mapelEsai)}_Korek51.xlsx`);
         showToast('Analisis Esai diunduh (Excel)!', 'success'); return;
@@ -5453,11 +5623,16 @@ if (!entry) {
       esaiList.forEach((r, idx) => {
         if (!r) return;
         const sudah = !!r.sudahDinilai && r.nilai !== null;
+        const totalNilai = sudah ? parseFloat(r.nilai).toFixed(2) : '-';
         const nilaiPerSoal = Array.isArray(r.nilaiPerSoal) ? r.nilaiPerSoal : [];
         const feedback = Array.isArray(r.feedbackPerSoal) ? r.feedbackPerSoal : [];
+        const jumlahBaris = soalList.length || 1;
         soalList.forEach((q, qi) => {
           const jwb = r.jawaban ? getStudentAnswerForSpecificQuestion(r.jawaban, qi) : '-';
-          rows += `<tr><td>${idx+1}</td><td>${escapeHtml(r.nama||'')}</td><td>${qi+1}</td><td style="text-align:left;max-width:300px">${escapeHtml(jwb)}</td><td>${sudah && nilaiPerSoal[qi] !== undefined ? nilaiPerSoal[qi] : '-'}</td><td style="text-align:left">${escapeHtml(feedback[qi] || '-')}</td></tr>`;
+          const selMerge = qi === 0
+            ? `<td rowspan="${jumlahBaris}" style="vertical-align:top;text-align:left;">${idx+1}</td><td rowspan="${jumlahBaris}" style="vertical-align:top;text-align:left;">${escapeHtml(r.nama||'')}</td><td rowspan="${jumlahBaris}" style="vertical-align:top;text-align:left;font-weight:800;color:#92400e;">${totalNilai}</td>`
+            : '';
+          rows += `<tr>${selMerge}<td>${qi+1}</td><td style="text-align:left;max-width:300px">${escapeHtml(jwb)}</td><td>${sudah && nilaiPerSoal[qi] !== undefined ? nilaiPerSoal[qi] : '-'}</td><td style="text-align:left">${escapeHtml(feedback[qi] || '-')}</td></tr>`;
         });
       });
 
@@ -5482,7 +5657,7 @@ if (!entry) {
           <div style="font-weight:700;color:#3730a3;margin-bottom:8px;">Daftar Pertanyaan Esai</div>
           <ul>${soalListHtml}</ul>
         </div>
-        <table><thead><tr><th>No</th><th>Nama</th><th>No Soal</th><th>Jawaban</th><th>Nilai</th><th>Alasan Penilaian</th></tr></thead><tbody>${rows}</tbody></table>
+        <table><thead><tr><th>No</th><th>Nama</th><th>Total Nilai Esai</th><th>No Soal</th><th>Jawaban</th><th>Nilai per Soal</th><th>Alasan Penilaian</th></tr></thead><tbody>${rows}</tbody></table>
         <br></body></html>`;
       if (mode === 'pdf') {
         generateAnalisisEsaiPdf(mapelEsai, stimulus, soalList, esaiList);
@@ -5534,16 +5709,29 @@ if (!entry) {
       esaiList.forEach((r, idx) => {
         if (!r) return;
         const sudah = !!r.sudahDinilai && r.nilai !== null;
+        const totalNilai = sudah ? parseFloat(r.nilai).toFixed(2) : '-';
         const nilaiPerSoal = Array.isArray(r.nilaiPerSoal) ? r.nilaiPerSoal : [];
         const feedback = Array.isArray(r.feedbackPerSoal) ? r.feedbackPerSoal : [];
+        const jumlahBaris = soalList.length || 1;
         soalList.forEach((q, qi) => {
           const jwb = r.jawaban ? getStudentAnswerForSpecificQuestion(r.jawaban, qi) : '-';
-          body.push([idx+1, toPlainAsciiForPdf(r.nama)||'', qi+1, toPlainAsciiForPdf(jwb), sudah && nilaiPerSoal[qi] !== undefined ? nilaiPerSoal[qi] : '-', toPlainAsciiForPdf(feedback[qi]) || '-']);
+          const nilai = sudah && nilaiPerSoal[qi] !== undefined ? nilaiPerSoal[qi] : '-';
+          const fb = toPlainAsciiForPdf(feedback[qi]) || '-';
+          if (qi === 0) {
+            body.push([
+              { content: idx+1, rowSpan: jumlahBaris, styles: { valign: 'top' } },
+              { content: toPlainAsciiForPdf(r.nama)||'', rowSpan: jumlahBaris, styles: { valign: 'top' } },
+              { content: totalNilai, rowSpan: jumlahBaris, styles: { valign: 'top' } },
+              qi+1, toPlainAsciiForPdf(jwb), nilai, fb
+            ]);
+          } else {
+            body.push([qi+1, toPlainAsciiForPdf(jwb), nilai, fb]);
+          }
         });
       });
       doc.autoTable({
         startY: curY + 6,
-        head: [['No', 'Nama', 'No Soal', 'Jawaban', 'Nilai', 'Alasan Penilaian']],
+        head: [['No', 'Nama', 'Total Nilai', 'No Soal', 'Jawaban', 'Nilai', 'Alasan Penilaian']],
         body: body,
         theme: 'grid',
         styles: { fontSize: 8, lineColor: [0, 0, 0], lineWidth: 0.1 },
