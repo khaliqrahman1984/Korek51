@@ -1203,7 +1203,7 @@ FORMAT KELUARAN (satu baris per murid):
     // GANTI URL DI BAWAH INI dengan URL deployment Apps Script Anda
     // (hasil dari Deploy > Manage deployments, yang diakhiri /exec)
     // ============================================================
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyPtWlVNEI3VrGdbUcFnUB1TBteuWLaJ4FBw8pZUA7nFk0bDka298FoNfbAX2q_FYNz/exec';
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwmCmxLtrZ6_E4Lfd0Cep8huCx-3WZrDtRDZzEqxPAPsOnyxeLgWUWxbL9mqYVJdJQ/exec';
 
     function gasFetch(fn, args) {
       return fetch(GAS_API_URL, {
@@ -4753,8 +4753,40 @@ if (!entry) {
     // Membaca nama murid yang sedang aktif lalu jawabannya per nomor,
     // mis: "Vander Lex, 1 A, 2 C, 3 B, dan seterusnya"
     // ============================================================
+    // FIX: state independen untuk melacak status aktif TTS bulk (bukan mengandalkan
+    // window.speechSynthesis.speaking, yang bernilai false selama jeda antar-kalimat
+    // sehingga warna tombol jadi tidak konsisten & tombol stop tidak berfungsi saat jeda).
+    let bulkTTSActive = false;
+    let bulkTTSTimeoutId = null;
+
+    function setBulkTTSButtonActive(isActive) {
+      const btn = document.getElementById('bulk-tts-btn');
+      if (!btn) return;
+      if (isActive) {
+        btn.classList.remove('bg-slate-100', 'text-slate-600');
+        btn.classList.add('bg-rose-600', 'text-white', 'animate-pulse');
+        setLucideIcon(btn, 'square');
+      } else {
+        btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse');
+        btn.classList.add('bg-slate-100', 'text-slate-600');
+        setLucideIcon(btn, 'volume-2');
+      }
+    }
+
+    function stopBulkTTS() {
+      if (bulkTTSTimeoutId) { clearTimeout(bulkTTSTimeoutId); bulkTTSTimeoutId = null; }
+      window.speechSynthesis.cancel();
+      bulkTTSActive = false;
+      setBulkTTSButtonActive(false);
+    }
+
     function bacaInstruksiBulk() {
       if (!('speechSynthesis' in window)) { showToast('Fitur text-to-speech tidak didukung di browser ini.', 'warning'); return; }
+
+      // FIX: cek status lewat flag sendiri, bukan speechSynthesis.speaking,
+      // supaya klik tombol tetap bisa menghentikan proses meskipun sedang di jeda antar-kalimat.
+      if (bulkTTSActive) { stopBulkTTS(); return; }
+
       const textarea = document.getElementById('bulk-textbox');
       const maxLen = appData.config.jumlahSoal || 5;
       const { line: activeLine } = getActiveBulkLineInfo(textarea);
@@ -4766,30 +4798,44 @@ if (!entry) {
         const ch = (jawaban[i] || '').toUpperCase().trim();
         bagianJawaban.push(`${i + 1} ${ch ? ch : 'Kosong'}`);
       }
-      const teks = ubahTeksUntukEjaanTTS(`${nama}, ${bagianJawaban.join(', ')}.`);
-      const btn = document.getElementById('bulk-tts-btn');
+      const teksNama = ubahTeksUntukEjaanTTS(`${nama}.`);
+      const teksJawaban = ubahTeksUntukEjaanTTS(`${bagianJawaban.join(', ')}.`);
       const rateSelect = document.getElementById('bulk-tts-rate');
       const rate = rateSelect ? parseFloat(rateSelect.value) || 1 : 1;
+      const JEDA_SETELAH_NAMA_MS = 150; // jarak jeda setelah menyebutkan nama murid sebelum membaca jawaban nomor 1
 
-      if (window.speechSynthesis.speaking) {
-        window.speechSynthesis.cancel();
-        if (btn) { btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse'); btn.classList.add('bg-slate-100', 'text-slate-600'); }
-        setLucideIcon(btn, 'volume-2');
-        return;
-      }
+      // FIX: aktifkan warna tombol SEKETIKA saat diklik (loading state),
+      // tidak menunggu event onstart yang kadang telat muncul (terutama di HP/Android).
+      bulkTTSActive = true;
+      setBulkTTSButtonActive(true);
 
-      const utterance = new SpeechSynthesisUtterance(teks);
-      applyIndonesianVoice(utterance);
-      utterance.rate = rate;
-      utterance.onstart = () => {
-        if (btn) { btn.classList.remove('bg-slate-100', 'text-slate-600'); btn.classList.add('bg-rose-600', 'text-white', 'animate-pulse'); }
-        setLucideIcon(btn, 'square');
+      const utteranceNama = new SpeechSynthesisUtterance(teksNama);
+      applyIndonesianVoice(utteranceNama);
+      utteranceNama.rate = rate;
+
+      const utteranceJawaban = new SpeechSynthesisUtterance(teksJawaban);
+      applyIndonesianVoice(utteranceJawaban);
+      utteranceJawaban.rate = rate;
+
+      utteranceNama.onend = () => {
+        if (!bulkTTSActive) return; // sudah dihentikan manual, jangan lanjut
+        bulkTTSTimeoutId = setTimeout(() => {
+          bulkTTSTimeoutId = null;
+          if (!bulkTTSActive) return; // FIX: cegah lanjut bicara jika sudah di-stop selama jeda
+          window.speechSynthesis.speak(utteranceJawaban);
+        }, JEDA_SETELAH_NAMA_MS);
       };
-      utterance.onend = () => {
-        if (btn) { btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse'); btn.classList.add('bg-slate-100', 'text-slate-600'); }
-        setLucideIcon(btn, 'volume-2');
+      utteranceJawaban.onend = () => {
+        bulkTTSActive = false;
+        setBulkTTSButtonActive(false);
       };
-      window.speechSynthesis.speak(utterance);
+      utteranceNama.onerror = utteranceJawaban.onerror = () => {
+        bulkTTSActive = false;
+        if (bulkTTSTimeoutId) { clearTimeout(bulkTTSTimeoutId); bulkTTSTimeoutId = null; }
+        setBulkTTSButtonActive(false);
+      };
+
+      window.speechSynthesis.speak(utteranceNama);
     }
 
     function kirimJawabanEsai(event) {
