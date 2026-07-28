@@ -1203,7 +1203,7 @@ FORMAT KELUARAN (satu baris per murid):
     // GANTI URL DI BAWAH INI dengan URL deployment Apps Script Anda
     // (hasil dari Deploy > Manage deployments, yang diakhiri /exec)
     // ============================================================
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxkQ4E9mUT6YCoG0B0JySgcM8AGg-Ny-RAz446hnDq-DxZ2lV8ERt2u0N_cps2EWtdF/exec';
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyPtWlVNEI3VrGdbUcFnUB1TBteuWLaJ4FBw8pZUA7nFk0bDka298FoNfbAX2q_FYNz/exec';
 
     function gasFetch(fn, args) {
       return fetch(GAS_API_URL, {
@@ -4374,16 +4374,14 @@ if (!entry) {
       activeSpeechRecognition = recognition;
       activeSpeechQuestionIdx = idx;
 
-      const micIcon = document.getElementById(`mic-icon-${idx}`);
       const micBtn = document.getElementById(`mic-btn-${idx}`);
       const statusEl = document.getElementById(`mic-status-${idx}`);
       const field = document.getElementById(`esai-answer-field-${idx}`);
 
       recognition.onstart = () => {
-        if (micIcon) micIcon.setAttribute('data-lucide', 'square');
         if (micBtn) micBtn.className = "p-2.5 rounded-full bg-rose-600 text-white hover:bg-rose-700 transition-all shadow-sm animate-pulse shrink-0";
+        setLucideIcon(micBtn, 'square');
         if (statusEl) statusEl.classList.remove('hidden');
-        lucide.createIcons();
       };
 
       recognition.onresult = (event) => {
@@ -4409,10 +4407,9 @@ if (!entry) {
       };
 
       recognition.onend = () => {
-        if (micIcon) micIcon.setAttribute('data-lucide', 'mic');
         if (micBtn) micBtn.className = "absolute top-3 right-3 p-2 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-all shadow-sm";
+        setLucideIcon(micBtn, 'mic');
         if (statusEl) statusEl.classList.add('hidden');
-        lucide.createIcons();
         activeSpeechRecognition = null;
         activeSpeechQuestionIdx = null;
       };
@@ -4481,6 +4478,32 @@ if (!entry) {
     }
 
     // ============================================================
+    // HELPER: Ganti ikon Lucide di dalam tombol dengan aman.
+    // Lucide.createIcons() mengganti <i data-lucide> menjadi <svg> dan
+    // TIDAK mempertahankan atribut id, sehingga lookup by-id pada ikon
+    // akan gagal setelah render pertama. Fungsi ini mencari ikon lewat
+    // elemen tombol induknya (id tombol tidak berubah), lalu mengganti
+    // node ikon (svg atau i) dengan <i data-lucide> baru sebelum
+    // lucide.createIcons() dipanggil ulang.
+    // ============================================================
+    function setLucideIcon(btnEl, iconName) {
+      if (!btnEl) return;
+      const existing = btnEl.querySelector('svg, i[data-lucide]');
+      if (existing) {
+        const i = document.createElement('i');
+        i.setAttribute('data-lucide', iconName);
+        const cls = existing.getAttribute('class');
+        if (cls) i.setAttribute('class', cls);
+        existing.replaceWith(i);
+      } else {
+        const i = document.createElement('i');
+        i.setAttribute('data-lucide', iconName);
+        btnEl.appendChild(i);
+      }
+      lucide.createIcons();
+    }
+
+    // ============================================================
     // TEXT-TO-SPEECH: BACA SOAL ESAI
     // ============================================================
     function bacaSoalEsai(idx) {
@@ -4490,15 +4513,13 @@ if (!entry) {
       if (!teksAsli) { showToast('Jawaban masih kosong.', 'warning'); return; }
       const teks = ubahTeksUntukEjaanTTS(teksAsli);
       const btn = document.getElementById(`tts-btn-${idx}`);
-      const icon = document.getElementById(`tts-icon-${idx}`);
       const rateSelect = document.getElementById(`tts-rate-${idx}`);
       const rate = rateSelect ? parseFloat(rateSelect.value) || 1 : 1;
 
       if (window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
-        if (icon) icon.setAttribute('data-lucide', 'volume-2');
         if (btn) { btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse'); btn.classList.add('bg-slate-100', 'text-slate-600'); }
-        lucide.createIcons();
+        setLucideIcon(btn, 'volume-2');
         return;
       }
 
@@ -4506,14 +4527,12 @@ if (!entry) {
       applyIndonesianVoice(utterance);
       utterance.rate = rate;
       utterance.onstart = () => {
-        if (icon) icon.setAttribute('data-lucide', 'square');
         if (btn) { btn.classList.remove('bg-slate-100', 'text-slate-600'); btn.classList.add('bg-rose-600', 'text-white', 'animate-pulse'); }
-        lucide.createIcons();
+        setLucideIcon(btn, 'square');
       };
       utterance.onend = () => {
-        if (icon) icon.setAttribute('data-lucide', 'volume-2');
         if (btn) { btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse'); btn.classList.add('bg-slate-100', 'text-slate-600'); }
-        lucide.createIcons();
+        setLucideIcon(btn, 'volume-2');
       };
       window.speechSynthesis.speak(utterance);
     }
@@ -4545,16 +4564,14 @@ if (!entry) {
 
       activeSpeechRecognitionGuruEsai = recognition;
 
-      const micIcon = document.getElementById('mic-icon-guru-esai');
       const micBtn = document.getElementById('mic-btn-guru-esai');
       const statusEl = document.getElementById('mic-status-guru-esai');
       const field = document.getElementById('config-esai-add-text');
 
       recognition.onstart = () => {
-        if (micIcon) micIcon.setAttribute('data-lucide', 'square');
         if (micBtn) micBtn.className = "p-2 rounded-full bg-rose-600 text-white hover:bg-rose-700 transition-all shadow-sm animate-pulse";
+        setLucideIcon(micBtn, 'square');
         if (statusEl) statusEl.classList.remove('hidden');
-        lucide.createIcons();
       };
 
       recognition.onresult = (event) => {
@@ -4580,10 +4597,9 @@ if (!entry) {
       };
 
       recognition.onend = () => {
-        if (micIcon) micIcon.setAttribute('data-lucide', 'mic');
         if (micBtn) micBtn.className = "p-2 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-all shadow-sm";
+        setLucideIcon(micBtn, 'mic');
         if (statusEl) statusEl.classList.add('hidden');
-        lucide.createIcons();
         activeSpeechRecognitionGuruEsai = null;
       };
 
@@ -4601,15 +4617,13 @@ if (!entry) {
       if (!teksAsli) { showToast('Tulisan masih kosong.', 'warning'); return; }
       const teks = ubahTeksUntukEjaanTTS(teksAsli);
       const btn = document.getElementById('tts-btn-guru-esai');
-      const icon = document.getElementById('tts-icon-guru-esai');
       const rateSelect = document.getElementById('tts-rate-guru-esai');
       const rate = rateSelect ? parseFloat(rateSelect.value) || 1 : 1;
 
       if (window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
-        if (icon) icon.setAttribute('data-lucide', 'volume-2');
         if (btn) { btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse'); btn.classList.add('bg-slate-100', 'text-slate-600'); }
-        lucide.createIcons();
+        setLucideIcon(btn, 'volume-2');
         return;
       }
 
@@ -4617,14 +4631,12 @@ if (!entry) {
       applyIndonesianVoice(utterance);
       utterance.rate = rate;
       utterance.onstart = () => {
-        if (icon) icon.setAttribute('data-lucide', 'square');
         if (btn) { btn.classList.remove('bg-slate-100', 'text-slate-600'); btn.classList.add('bg-rose-600', 'text-white', 'animate-pulse'); }
-        lucide.createIcons();
+        setLucideIcon(btn, 'square');
       };
       utterance.onend = () => {
-        if (icon) icon.setAttribute('data-lucide', 'volume-2');
         if (btn) { btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse'); btn.classList.add('bg-slate-100', 'text-slate-600'); }
-        lucide.createIcons();
+        setLucideIcon(btn, 'volume-2');
       };
       window.speechSynthesis.speak(utterance);
     }
@@ -4648,13 +4660,11 @@ if (!entry) {
     let bulkMicRestartTimeout = null;
 
     function resetBulkMicUI() {
-      const micIcon = document.getElementById('bulk-mic-icon');
       const micBtn = document.getElementById('bulk-mic-btn');
       const statusEl = document.getElementById('bulk-mic-status');
-      if (micIcon) micIcon.setAttribute('data-lucide', 'mic');
       if (micBtn) micBtn.className = "p-2.5 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-all shadow-sm shrink-0";
+      setLucideIcon(micBtn, 'mic');
       if (statusEl) statusEl.classList.add('hidden');
-      lucide.createIcons();
     }
 
     function toggleBulkVoiceInput() {
@@ -4691,15 +4701,13 @@ if (!entry) {
 
       activeBulkSpeechRecognition = recognition;
 
-      const micIcon = document.getElementById('bulk-mic-icon');
       const micBtn = document.getElementById('bulk-mic-btn');
       const statusEl = document.getElementById('bulk-mic-status');
 
       recognition.onstart = () => {
-        if (micIcon) micIcon.setAttribute('data-lucide', 'square');
         if (micBtn) micBtn.className = "absolute top-3 right-3 p-2 rounded-full bg-rose-600 text-white hover:bg-rose-700 transition-all shadow-sm animate-pulse";
+        setLucideIcon(micBtn, 'square');
         if (statusEl) statusEl.classList.remove('hidden');
-        lucide.createIcons();
       };
 
       recognition.onresult = (event) => {
@@ -4727,10 +4735,9 @@ if (!entry) {
       };
 
       recognition.onend = () => {
-        if (micIcon) micIcon.setAttribute('data-lucide', 'mic');
         if (micBtn) micBtn.className = "p-2.5 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-all shadow-sm shrink-0";
+        setLucideIcon(micBtn, 'mic');
         if (statusEl) statusEl.classList.add('hidden');
-        lucide.createIcons();
         activeBulkSpeechRecognition = null;
       };
 
@@ -4761,15 +4768,13 @@ if (!entry) {
       }
       const teks = ubahTeksUntukEjaanTTS(`${nama}, ${bagianJawaban.join(', ')}.`);
       const btn = document.getElementById('bulk-tts-btn');
-      const icon = document.getElementById('bulk-tts-icon');
       const rateSelect = document.getElementById('bulk-tts-rate');
       const rate = rateSelect ? parseFloat(rateSelect.value) || 1 : 1;
 
       if (window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
-        if (icon) icon.setAttribute('data-lucide', 'volume-2');
         if (btn) { btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse'); btn.classList.add('bg-slate-100', 'text-slate-600'); }
-        lucide.createIcons();
+        setLucideIcon(btn, 'volume-2');
         return;
       }
 
@@ -4777,14 +4782,12 @@ if (!entry) {
       applyIndonesianVoice(utterance);
       utterance.rate = rate;
       utterance.onstart = () => {
-        if (icon) icon.setAttribute('data-lucide', 'square');
         if (btn) { btn.classList.remove('bg-slate-100', 'text-slate-600'); btn.classList.add('bg-rose-600', 'text-white', 'animate-pulse'); }
-        lucide.createIcons();
+        setLucideIcon(btn, 'square');
       };
       utterance.onend = () => {
-        if (icon) icon.setAttribute('data-lucide', 'volume-2');
         if (btn) { btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse'); btn.classList.add('bg-slate-100', 'text-slate-600'); }
-        lucide.createIcons();
+        setLucideIcon(btn, 'volume-2');
       };
       window.speechSynthesis.speak(utterance);
     }
