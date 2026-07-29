@@ -66,6 +66,13 @@
       font-weight: 900;
       letter-spacing: 0.03em;
     }
+    .tts-highlight-word {
+      background: #6366f1;
+      color: #ffffff;
+      border-radius: 4px;
+      padding: 0 2px;
+      transition: background 0.1s ease;
+    }
     /* DARK MODE */
     body.dark { background: #0f172a; color: #e2e8f0; }
     body.dark .bg-white { background: #0f172a !important; }
@@ -93,6 +100,7 @@
     body.dark #esai-incomplete-list .esai-item-row p { color: #cbd5e1 !important; }
     body.dark #sync-overlay-box { background: rgba(30,41,59,0.92) !important; border-color: #334155 !important; }
     body.dark #sync-overlay-text { color: #e2e8f0 !important; }
+    body.dark .tts-highlight-word { background: #818cf8 !important; color: #1e1b4b !important; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen relative">
@@ -841,7 +849,8 @@
             <div class="space-y-2">
               <div class="relative">
                 <textarea id="config-esai-add-text" oninput="autoExpandTextarea(this)" rows="4" placeholder="Tuliskan butir soal esai baru... (untuk tambah banyak sekaligus, pisahkan dengan ;; atau ... )" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 pr-14 text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none overflow-hidden"></textarea>
-                <div class="absolute top-3 right-3 flex flex-col items-center gap-1.5">
+                <div id="guru-esai-text-highlight" class="hidden absolute inset-0 w-full h-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 pr-14 text-sm outline-none pointer-events-none overflow-y-auto whitespace-pre-wrap z-10"></div>
+                <div class="absolute top-3 right-3 flex flex-col items-center gap-1.5 z-20">
                   <button type="button" id="mic-btn-guru-esai" onclick="toggleVoiceInputGuruEsai()" title="Bicara untuk mengisi soal (Bahasa Indonesia)" class="p-2 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-all shadow-sm">
                     <i data-lucide="mic" class="w-4 h-4" id="mic-icon-guru-esai"></i>
                   </button>
@@ -1253,7 +1262,7 @@ FORMAT KELUARAN (satu baris per murid):
     // GANTI URL DI BAWAH INI dengan URL deployment Apps Script Anda
     // (hasil dari Deploy > Manage deployments, yang diakhiri /exec)
     // ============================================================
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxoS9vHyuv7Oj4uVN_nYoDLtIrPsF4SFybinn-_N1r42L9DLaaYMYBWY020XcFH0ojq/exec';
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbywrCknSqWvaxk6Xp2AAsOPq73ON_fbltdPHp-Ty_3fftcLoo5murRHXGohezactsNT/exec';
 
     // ============================================================
     // SYNC OVERLAY — loading modern saat kirim/ambil data Spreadsheet
@@ -2671,7 +2680,8 @@ FORMAT KELUARAN (satu baris per murid):
           <p class="text-sm text-slate-700 font-semibold leading-relaxed whitespace-pre-wrap">${q}</p>
           <div class="relative">
             <textarea id="esai-answer-field-${idx}" oninput="autoExpandTextarea(this)" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 pr-14 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium" placeholder="Tuliskan jawaban lengkap Anda untuk Soal ${idx + 1}..."></textarea>
-            <div class="absolute top-3 right-3 flex flex-col items-center gap-1.5">
+            <div id="esai-answer-highlight-${idx}" class="hidden absolute inset-0 w-full h-full bg-slate-50 border border-slate-200 rounded-xl p-4 pr-14 text-sm font-medium pointer-events-none overflow-y-auto whitespace-pre-wrap z-10"></div>
+            <div class="absolute top-3 right-3 flex flex-col items-center gap-1.5 z-20">
               <button type="button" id="mic-btn-${idx}" onclick="toggleVoiceInput(${idx})" title="Bicara untuk mengisi jawaban (Bahasa Indonesia)" class="p-2 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-all shadow-sm">
                 <i data-lucide="mic" class="w-4 h-4" id="mic-icon-${idx}"></i>
               </button>
@@ -4650,6 +4660,141 @@ if (!entry) {
     }
 
     // ============================================================
+    // HIGHLIGHT TEKS SAAT DIBACAKAN (TTS)
+    // Menandai kata yang sedang diucapkan menggunakan event onboundary
+    // dari SpeechSynthesisUtterance, lalu menggerakkan tanda tersebut
+    // mengikuti posisi suara secara realtime.
+    // Catatan: dukungan event 'word' boundary bergantung pada mesin TTS
+    // browser/perangkat. Jika tidak didukung, overlay tetap menampilkan
+    // teks (tanpa highlight bergerak) sehingga tidak merusak tampilan.
+    // ============================================================
+    function renderTTSHighlight(container, fullText, charIndex, charLength) {
+      if (!container) return;
+      if (charIndex === undefined || charIndex === null) {
+        container.textContent = fullText;
+        return;
+      }
+      const safeLen = (typeof charLength === 'number' && charLength > 0) ? charLength : 1;
+      const before = fullText.substring(0, charIndex);
+      const current = fullText.substring(charIndex, charIndex + safeLen);
+      const after = fullText.substring(charIndex + safeLen);
+      container.innerHTML = escapeHtml(before) + '<mark class="tts-highlight-word">' + escapeHtml(current) + '</mark>' + escapeHtml(after);
+      const mark = container.querySelector('.tts-highlight-word');
+      if (mark) mark.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+
+    function showTTSHighlightOverlay(textareaEl, overlayEl, fullText) {
+      if (!textareaEl || !overlayEl) return;
+      textareaEl.dataset.origColor = textareaEl.style.color || '';
+      textareaEl.style.color = 'transparent';
+      textareaEl.style.caretColor = 'transparent';
+      overlayEl.classList.remove('hidden');
+      renderTTSHighlight(overlayEl, fullText);
+    }
+
+    function hideTTSHighlightOverlay(textareaEl, overlayEl) {
+      if (!textareaEl || !overlayEl) return;
+      textareaEl.style.color = textareaEl.dataset.origColor || '';
+      textareaEl.style.caretColor = '';
+      overlayEl.classList.add('hidden');
+      overlayEl.innerHTML = '';
+    }
+
+    // ============================================================
+    // FIX: HIGHLIGHT BERBASIS TIMER (bukan event onboundary)
+    // Event 'onboundary' bawaan Web Speech API TIDAK reliable di banyak
+    // browser/HP (khususnya suara Bahasa Indonesia di Android) — kadang
+    // tidak pernah terpicu, kadang cuma sekali lalu berhenti. Solusinya:
+    // highlight digerakkan pakai perkiraan durasi per kata berdasarkan
+    // jumlah karakter & kecepatan baca (rate), berjalan independen dari
+    // event boundary sehingga selalu bergerak di perangkat manapun.
+    // ============================================================
+    let activeTTSHighlighter = null;
+
+    // ============================================================
+    // FIX v2: HIGHLIGHT ADAPTIF (hybrid timer + kalibrasi via onboundary)
+    // - Timer jalan terus sebagai basis pergerakan highlight (supaya tetap
+    //   bergerak walau onboundary tidak pernah muncul di perangkat ini).
+    // - SETIAP KALI onboundary memang terpicu (walau tidak untuk semua kata,
+    //   walau tidak presisi timing-nya), posisi highlight langsung dikoreksi
+    //   ke posisi sebenarnya DAN kecepatan timer (ms per karakter) dihitung
+    //   ulang berdasarkan kecepatan bicara aktual antara 2 event terakhir.
+    //   Ini membuat sinkronisasi makin lama makin akurat, bukan makin meleset.
+    // ============================================================
+    function createAdaptiveHighlighter(fullText, overlayEl, initialRate) {
+      const words = [];
+      const re = /\S+/g;
+      let m;
+      while ((m = re.exec(fullText)) !== null) {
+        words.push({ start: m.index, length: m[0].length });
+      }
+
+      const safeRate = initialRate || 1;
+      let msPerChar = 70 / safeRate; // estimasi awal sebelum ada kalibrasi nyata
+      let idx = -1;
+      let timerId = null;
+      let stopped = false;
+      let lastBoundaryTime = null;
+      let lastBoundaryCharIndex = 0;
+
+      function renderWordAt(wordIdx) {
+        if (wordIdx < 0 || wordIdx >= words.length) return;
+        idx = wordIdx;
+        renderTTSHighlight(overlayEl, fullText, words[idx].start, words[idx].length);
+      }
+
+      function scheduleNext() {
+        if (stopped || idx >= words.length - 1) return;
+        const cur = words[idx];
+        const next = words[idx + 1];
+        const gapChars = Math.max(1, next.start - cur.start);
+        const dur = Math.max(140, gapChars * msPerChar);
+        timerId = setTimeout(() => {
+          renderWordAt(idx + 1);
+          scheduleNext();
+        }, dur);
+      }
+
+      function findWordIndexAtChar(charIndex) {
+        let target = 0;
+        for (let i = 0; i < words.length; i++) {
+          if (words[i].start <= charIndex) target = i; else break;
+        }
+        return target;
+      }
+
+      return {
+        start() {
+          if (words.length === 0) return;
+          renderWordAt(0);
+          scheduleNext();
+        },
+        // Dipanggil setiap kali event onboundary browser benar-benar terpicu
+        onBoundary(charIndex) {
+          if (stopped) return;
+          if (timerId) { clearTimeout(timerId); timerId = null; }
+          const now = performance.now();
+          if (lastBoundaryTime !== null) {
+            const elapsedMs = now - lastBoundaryTime;
+            const charsCovered = charIndex - lastBoundaryCharIndex;
+            // Hanya kalibrasi ulang jika datanya masuk akal (hindari lompatan aneh)
+            if (charsCovered > 0 && elapsedMs > 30) {
+              msPerChar = elapsedMs / charsCovered;
+            }
+          }
+          lastBoundaryTime = now;
+          lastBoundaryCharIndex = charIndex;
+          renderWordAt(findWordIndexAtChar(charIndex));
+          scheduleNext();
+        },
+        stop() {
+          stopped = true;
+          if (timerId) clearTimeout(timerId);
+        }
+      };
+    }
+
+    // ============================================================
     // HELPER: Ganti ikon Lucide di dalam tombol dengan aman.
     // Lucide.createIcons() mengganti <i data-lucide> menjadi <svg> dan
     // TIDAK mempertahankan atribut id, sehingga lookup by-id pada ikon
@@ -4681,6 +4826,7 @@ if (!entry) {
     function bacaSoalEsai(idx) {
       if (!('speechSynthesis' in window)) { showToast('Fitur text-to-speech tidak didukung di browser ini.', 'warning'); return; }
       const answerField = document.getElementById(`esai-answer-field-${idx}`);
+      const overlayEl = document.getElementById(`esai-answer-highlight-${idx}`);
       const teksAsli = answerField ? answerField.value.trim() : '';
       if (!teksAsli) { showToast('Jawaban masih kosong.', 'warning'); return; }
       const teks = ubahTeksUntukEjaanTTS(teksAsli);
@@ -4690,8 +4836,10 @@ if (!entry) {
 
       if (window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
+        if (activeTTSHighlighter) { activeTTSHighlighter.stop(); activeTTSHighlighter = null; }
         if (btn) { btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse'); btn.classList.add('bg-slate-100', 'text-slate-600'); }
         setLucideIcon(btn, 'volume-2');
+        hideTTSHighlightOverlay(answerField, overlayEl);
         return;
       }
 
@@ -4701,10 +4849,26 @@ if (!entry) {
       utterance.onstart = () => {
         if (btn) { btn.classList.remove('bg-slate-100', 'text-slate-600'); btn.classList.add('bg-rose-600', 'text-white', 'animate-pulse'); }
         setLucideIcon(btn, 'square');
+        showTTSHighlightOverlay(answerField, overlayEl, teks);
+        if (activeTTSHighlighter) activeTTSHighlighter.stop();
+        activeTTSHighlighter = createAdaptiveHighlighter(teks, overlayEl, rate);
+        activeTTSHighlighter.start();
+      };
+      utterance.onboundary = (event) => {
+        if (event.name && event.name !== 'word' && event.name !== 'sentence') return;
+        if (activeTTSHighlighter) activeTTSHighlighter.onBoundary(event.charIndex);
       };
       utterance.onend = () => {
+        if (activeTTSHighlighter) { activeTTSHighlighter.stop(); activeTTSHighlighter = null; }
         if (btn) { btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse'); btn.classList.add('bg-slate-100', 'text-slate-600'); }
         setLucideIcon(btn, 'volume-2');
+        hideTTSHighlightOverlay(answerField, overlayEl);
+      };
+      utterance.onerror = () => {
+        if (activeTTSHighlighter) { activeTTSHighlighter.stop(); activeTTSHighlighter = null; }
+        if (btn) { btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse'); btn.classList.add('bg-slate-100', 'text-slate-600'); }
+        setLucideIcon(btn, 'volume-2');
+        hideTTSHighlightOverlay(answerField, overlayEl);
       };
       window.speechSynthesis.speak(utterance);
     }
@@ -4795,6 +4959,7 @@ if (!entry) {
     function bacaTeksSoalGuru() {
       if (!('speechSynthesis' in window)) { showToast('Fitur text-to-speech tidak didukung di browser ini.', 'warning'); return; }
       const field = document.getElementById('config-esai-add-text');
+      const overlayEl = document.getElementById('guru-esai-text-highlight');
       const teksAsli = field ? field.value.trim() : '';
       if (!teksAsli) { showToast('Tulisan masih kosong.', 'warning'); return; }
       const teks = ubahTeksUntukEjaanTTS(teksAsli);
@@ -4804,8 +4969,10 @@ if (!entry) {
 
       if (window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
+        if (activeTTSHighlighter) { activeTTSHighlighter.stop(); activeTTSHighlighter = null; }
         if (btn) { btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse'); btn.classList.add('bg-slate-100', 'text-slate-600'); }
         setLucideIcon(btn, 'volume-2');
+        hideTTSHighlightOverlay(field, overlayEl);
         return;
       }
 
@@ -4815,10 +4982,26 @@ if (!entry) {
       utterance.onstart = () => {
         if (btn) { btn.classList.remove('bg-slate-100', 'text-slate-600'); btn.classList.add('bg-rose-600', 'text-white', 'animate-pulse'); }
         setLucideIcon(btn, 'square');
+        showTTSHighlightOverlay(field, overlayEl, teks);
+        if (activeTTSHighlighter) activeTTSHighlighter.stop();
+        activeTTSHighlighter = createAdaptiveHighlighter(teks, overlayEl, rate);
+        activeTTSHighlighter.start();
+      };
+      utterance.onboundary = (event) => {
+        if (event.name && event.name !== 'word' && event.name !== 'sentence') return;
+        if (activeTTSHighlighter) activeTTSHighlighter.onBoundary(event.charIndex);
       };
       utterance.onend = () => {
+        if (activeTTSHighlighter) { activeTTSHighlighter.stop(); activeTTSHighlighter = null; }
         if (btn) { btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse'); btn.classList.add('bg-slate-100', 'text-slate-600'); }
         setLucideIcon(btn, 'volume-2');
+        hideTTSHighlightOverlay(field, overlayEl);
+      };
+      utterance.onerror = () => {
+        if (activeTTSHighlighter) { activeTTSHighlighter.stop(); activeTTSHighlighter = null; }
+        if (btn) { btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse'); btn.classList.add('bg-slate-100', 'text-slate-600'); }
+        setLucideIcon(btn, 'volume-2');
+        hideTTSHighlightOverlay(field, overlayEl);
       };
       window.speechSynthesis.speak(utterance);
     }
