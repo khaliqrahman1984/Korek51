@@ -86,6 +86,13 @@
     body.dark .shadow-sm { box-shadow: 0 1px 3px rgba(0,0,0,0.5) !important; }
     body.dark footer { background: #1e293b !important; border-color: #334155 !important; }
     body.dark aside { background: #1e293b !important; border-color: #334155 !important; }
+    body.dark #custom-modal-badges span { background: #451a03 !important; border-color: #d97706 !important; color: #fbbf24 !important; }
+    body.dark #esai-incomplete-modal-box { background: #0f172a !important; }
+    body.dark #esai-incomplete-modal-box .bg-gradient-to-br { background: linear-gradient(135deg, #451a03 0%, #3f1d0a 100%) !important; border-color: #78350f !important; }
+    body.dark #esai-incomplete-list .esai-item-row { background: #1e293b !important; border-color: #334155 !important; }
+    body.dark #esai-incomplete-list .esai-item-row p { color: #cbd5e1 !important; }
+    body.dark #sync-overlay-box { background: rgba(30,41,59,0.92) !important; border-color: #334155 !important; }
+    body.dark #sync-overlay-text { color: #e2e8f0 !important; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen relative">
@@ -99,21 +106,64 @@
     </div>
   </div>
 
+  <!-- SYNC OVERLAY: Loading modern saat kirim/ambil data dari Spreadsheet -->
+  <div id="sync-overlay" class="hidden fixed inset-0 z-[160] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-md transition-opacity duration-300">
+    <div id="sync-overlay-box" class="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/60 px-8 py-7 flex flex-col items-center gap-4 min-w-[220px] transform scale-95 transition-all duration-300">
+      <div class="relative w-14 h-14 flex items-center justify-center">
+        <span class="absolute inset-0 rounded-full border-4 border-indigo-100"></span>
+        <span class="absolute inset-0 rounded-full border-4 border-transparent border-t-indigo-600 border-r-indigo-600 animate-spin"></span>
+        <i data-lucide="cloud" class="w-6 h-6 text-indigo-600"></i>
+      </div>
+      <div class="text-center">
+        <p id="sync-overlay-text" class="text-sm font-bold text-slate-700">Menyinkronkan data...</p>
+        <p class="text-[11px] text-slate-400 mt-0.5">Mohon tunggu sebentar</p>
+      </div>
+      <div class="flex gap-1.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style="animation-delay:0ms"></span>
+        <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style="animation-delay:150ms"></span>
+        <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style="animation-delay:300ms"></span>
+      </div>
+    </div>
+  </div>
+
   <!-- DIALOG KONFIRMASI KUSTOM -->
   <div id="custom-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 transform scale-95 opacity-0 transition-all duration-200" id="custom-modal-box">
-      <div class="flex items-start gap-4 mb-4">
-        <div id="custom-modal-icon-bg" class="p-3 rounded-xl bg-indigo-50 text-indigo-600">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 transform scale-95 opacity-0 transition-all duration-200" id="custom-modal-box">
+      <div class="flex items-start gap-4 mb-2">
+        <div id="custom-modal-icon-bg" class="p-3 rounded-2xl bg-indigo-50 text-indigo-600 shrink-0">
           <i data-lucide="help-circle" class="w-6 h-6" id="custom-modal-icon"></i>
         </div>
-        <div>
-          <h3 class="text-lg font-bold text-slate-800" id="custom-modal-title">Konfirmasi Tindakan</h3>
-          <p class="text-sm text-slate-500 mt-1" id="custom-modal-desc">Apakah Anda yakin ingin melanjutkan?</p>
+        <div class="flex-1 pt-0.5">
+          <h3 class="text-lg font-bold text-slate-800 leading-tight" id="custom-modal-title">Konfirmasi Tindakan</h3>
+          <p class="text-sm text-slate-500 mt-1.5 leading-relaxed" id="custom-modal-desc">Apakah Anda yakin ingin melanjutkan?</p>
         </div>
       </div>
-      <div class="flex justify-end gap-3 pt-2">
-        <button id="custom-modal-btn-cancel" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-all">Batal</button>
-        <button id="custom-modal-btn-confirm" class="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-lg shadow-indigo-100 transition-all">Lanjutkan</button>
+      <div id="custom-modal-badges" class="hidden flex-wrap gap-1.5 mb-1 ml-[3.25rem] pl-0"></div>
+      <div class="flex justify-end gap-3 pt-4 mt-1 border-t border-slate-100">
+        <button id="custom-modal-btn-cancel" class="px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-all">Batal</button>
+        <button id="custom-modal-btn-confirm" class="px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-lg shadow-indigo-100 transition-all active:scale-95">Lanjutkan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIALOG JAWABAN ESAI BELUM LENGKAP -->
+  <div id="esai-incomplete-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+    <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-slate-100 transform scale-95 opacity-0 transition-all duration-200 overflow-hidden" id="esai-incomplete-modal-box">
+      <div class="bg-gradient-to-br from-amber-50 to-orange-50 px-6 pt-6 pb-5 border-b border-amber-100">
+        <div class="flex items-center gap-3">
+          <div class="p-2.5 rounded-2xl bg-amber-100 text-amber-600 shrink-0">
+            <i data-lucide="file-warning" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-800">Jawaban Esai Belum Lengkap</h3>
+            <p id="esai-incomplete-subtitle" class="text-xs text-slate-500 mt-0.5">Ada soal yang belum dijawab</p>
+          </div>
+        </div>
+      </div>
+      <div id="esai-incomplete-list" class="px-6 py-4 space-y-2 max-h-64 overflow-y-auto"></div>
+      <div class="px-6 pb-5 pt-1 flex gap-3">
+        <button onclick="closeEsaiIncompleteModal()" class="flex-1 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-all border border-slate-200">Lengkapi Dulu</button>
+        <button id="esai-incomplete-btn-confirm" class="flex-1 py-2.5 text-sm font-bold text-white bg-amber-500 hover:bg-amber-600 rounded-xl shadow-lg shadow-amber-100 transition-all active:scale-95">Tetap Kirim</button>
       </div>
     </div>
   </div>
@@ -1203,14 +1253,44 @@ FORMAT KELUARAN (satu baris per murid):
     // GANTI URL DI BAWAH INI dengan URL deployment Apps Script Anda
     // (hasil dari Deploy > Manage deployments, yang diakhiri /exec)
     // ============================================================
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwmCmxLtrZ6_E4Lfd0Cep8huCx-3WZrDtRDZzEqxPAPsOnyxeLgWUWxbL9mqYVJdJQ/exec';
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxoS9vHyuv7Oj4uVN_nYoDLtIrPsF4SFybinn-_N1r42L9DLaaYMYBWY020XcFH0ojq/exec';
+
+    // ============================================================
+    // SYNC OVERLAY — loading modern saat kirim/ambil data Spreadsheet
+    // ============================================================
+    let syncOverlayActiveCount = 0;
+
+    function showSyncOverlay(message) {
+      syncOverlayActiveCount++;
+      const overlay = document.getElementById('sync-overlay');
+      const box = document.getElementById('sync-overlay-box');
+      const textEl = document.getElementById('sync-overlay-text');
+      if (!overlay) return;
+      if (textEl) textEl.textContent = message || 'Menyinkronkan data...';
+      overlay.classList.remove('hidden');
+      requestAnimationFrame(() => { if (box) box.classList.remove('scale-95'); });
+      lucide.createIcons();
+    }
+
+    function hideSyncOverlay() {
+      syncOverlayActiveCount = Math.max(0, syncOverlayActiveCount - 1);
+      if (syncOverlayActiveCount > 0) return; // masih ada request lain yang berjalan
+      const overlay = document.getElementById('sync-overlay');
+      const box = document.getElementById('sync-overlay-box');
+      if (!overlay) return;
+      if (box) box.classList.add('scale-95');
+      setTimeout(() => overlay.classList.add('hidden'), 150);
+    }
 
     function gasFetch(fn, args) {
+      const tampilkanOverlay = !isInitialLoadInProgress;
+      if (tampilkanOverlay) showSyncOverlay('Mengirim data ke spreadsheet...');
       return fetch(GAS_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // hindari preflight CORS
         body: JSON.stringify({ fn, args })
-      }).then(r => r.json());
+      }).then(r => r.json())
+        .finally(() => { if (tampilkanOverlay) hideSyncOverlay(); });
     }
 
     // Shim/tiruan google.script.run, supaya SEMUA kode lama yang sudah ada
@@ -1244,6 +1324,7 @@ FORMAT KELUARAN (satu baris per murid):
     };
 
     let isGAS = GAS_API_URL && !GAS_API_URL.includes('PASTE_URL');
+    let isInitialLoadInProgress = true; // FIX: cegah overlay sync tampil saat loading pertama kali (sudah ada loading-screen sendiri)
     let selectedNav = 'MURID';
     let selectedSubNav = 'jawaban-pg';
     let firstBuildDone = false;
@@ -1326,7 +1407,7 @@ FORMAT KELUARAN (satu baris per murid):
     // ============================================================
     // CUSTOM MODAL
     // ============================================================
-    function triggerCustomModal(title, desc, iconName, onConfirmCallback, theme = 'indigo') {
+    function triggerCustomModal(title, desc, iconName, onConfirmCallback, theme = 'indigo', badgeNumbers = null) {
       const modal = document.getElementById('custom-modal');
       const box = document.getElementById('custom-modal-box');
       document.getElementById('custom-modal-title').textContent = title;
@@ -1334,25 +1415,96 @@ FORMAT KELUARAN (satu baris per murid):
       document.getElementById('custom-modal-icon').setAttribute('data-lucide', iconName);
       const iconBg = document.getElementById('custom-modal-icon-bg');
       const btnConfirm = document.getElementById('custom-modal-btn-confirm');
-      if (theme === 'red') {
-        iconBg.className = "p-3 rounded-xl bg-red-50 text-red-600";
-        btnConfirm.className = "px-5 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl shadow-lg shadow-red-100 transition-all";
+      const btnCancel = document.getElementById('custom-modal-btn-cancel');
+      const badgesContainer = document.getElementById('custom-modal-badges');
+
+      const themes = {
+        red:    { iconBg: 'bg-red-50 text-red-600',       btn: 'bg-red-600 hover:bg-red-700 shadow-red-100',       badge: 'bg-red-50 text-red-700 border-red-200' },
+        amber:  { iconBg: 'bg-amber-50 text-amber-600',   btn: 'bg-amber-500 hover:bg-amber-600 shadow-amber-100', badge: 'bg-amber-50 text-amber-700 border-amber-200' },
+        indigo: { iconBg: 'bg-indigo-50 text-indigo-600', btn: 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100', badge: 'bg-indigo-50 text-indigo-700 border-indigo-200' }
+      };
+      const t = themes[theme] || themes.indigo;
+
+      iconBg.className = `p-3 rounded-2xl ${t.iconBg} shrink-0`;
+      btnConfirm.className = `px-5 py-2.5 text-sm font-bold text-white ${t.btn} rounded-xl shadow-lg transition-all active:scale-95`;
+
+      // Tampilkan badge nomor soal (mis. nomor yang belum dijawab) jika disediakan
+      if (Array.isArray(badgeNumbers) && badgeNumbers.length > 0) {
+        badgesContainer.innerHTML = badgeNumbers.map(n =>
+          `<span class="inline-flex items-center justify-center min-w-[28px] h-7 px-2 rounded-lg border text-xs font-extrabold ${t.badge}">${n}</span>`
+        ).join('');
+        badgesContainer.classList.remove('hidden');
+        badgesContainer.classList.add('flex');
       } else {
-        iconBg.className = "p-3 rounded-xl bg-indigo-50 text-indigo-600";
-        btnConfirm.className = "px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-lg shadow-indigo-100 transition-all";
+        badgesContainer.innerHTML = '';
+        badgesContainer.classList.add('hidden');
+        badgesContainer.classList.remove('flex');
       }
+
+      // Jika tidak ada callback konfirmasi (dialog info-saja), tombol Batal disembunyikan
+      // dan tombol utama diberi label netral "Mengerti".
+      if (!onConfirmCallback && arguments.length >= 4 && onConfirmCallback === null) {
+        btnCancel.classList.add('hidden');
+        btnConfirm.textContent = 'Mengerti';
+      } else {
+        btnCancel.classList.remove('hidden');
+        btnConfirm.textContent = 'Lanjutkan';
+      }
+
       lucide.createIcons();
       modal.classList.remove('hidden');
       setTimeout(() => { box.classList.remove('scale-95', 'opacity-0'); box.classList.add('scale-100', 'opacity-100'); }, 10);
       btnConfirm.onclick = () => { closeCustomModal(); if (onConfirmCallback) onConfirmCallback(); };
-      document.getElementById('custom-modal-btn-cancel').onclick = closeCustomModal;
+      btnCancel.onclick = closeCustomModal;
     }
 
     function closeCustomModal() {
       const box = document.getElementById('custom-modal-box');
+      const btnCancel = document.getElementById('custom-modal-btn-cancel');
+      const btnConfirm = document.getElementById('custom-modal-btn-confirm');
       box.classList.add('scale-95', 'opacity-0');
       box.classList.remove('scale-100', 'opacity-100');
-      setTimeout(() => { document.getElementById('custom-modal').classList.add('hidden'); }, 200);
+      setTimeout(() => {
+        document.getElementById('custom-modal').classList.add('hidden');
+        btnCancel.classList.remove('hidden');
+        btnConfirm.textContent = 'Lanjutkan';
+      }, 200);
+    }
+
+    // ============================================================
+    // DIALOG KHUSUS: Jawaban Esai Belum Lengkap
+    // Menampilkan daftar soal yang kosong beserta cuplikan pertanyaannya,
+    // desainnya sengaja dibuat berbeda dari dialog PG (bukan chip nomor).
+    // ============================================================
+    function triggerEsaiIncompleteModal(emptyItems, onConfirmCallback) {
+      const modal = document.getElementById('esai-incomplete-modal');
+      const box = document.getElementById('esai-incomplete-modal-box');
+      const subtitle = document.getElementById('esai-incomplete-subtitle');
+      const listContainer = document.getElementById('esai-incomplete-list');
+      const btnConfirm = document.getElementById('esai-incomplete-btn-confirm');
+
+      subtitle.textContent = `${emptyItems.length} dari soal esai masih kosong`;
+
+      listContainer.innerHTML = emptyItems.map(item => {
+        const cuplikan = (item.teks || '').length > 70 ? item.teks.substring(0, 70) + '...' : (item.teks || '');
+        return `
+          <div class="esai-item-row flex items-start gap-3 bg-amber-50/60 border border-amber-100 rounded-xl px-3.5 py-2.5">
+            <span class="shrink-0 mt-0.5 w-6 h-6 rounded-full bg-amber-400 text-white text-[11px] font-extrabold flex items-center justify-center">${item.nomor}</span>
+            <p class="text-xs text-slate-600 leading-relaxed pt-0.5">${cuplikan || '(tanpa teks soal)'}</p>
+          </div>`;
+      }).join('');
+
+      lucide.createIcons();
+      modal.classList.remove('hidden');
+      setTimeout(() => { box.classList.remove('scale-95', 'opacity-0'); box.classList.add('scale-100', 'opacity-100'); }, 10);
+      btnConfirm.onclick = () => { closeEsaiIncompleteModal(); if (onConfirmCallback) onConfirmCallback(); };
+    }
+
+    function closeEsaiIncompleteModal() {
+      const box = document.getElementById('esai-incomplete-modal-box');
+      box.classList.add('scale-95', 'opacity-0');
+      box.classList.remove('scale-100', 'opacity-100');
+      setTimeout(() => { document.getElementById('esai-incomplete-modal').classList.add('hidden'); }, 200);
     }
 
     // ============================================================
@@ -1470,6 +1622,7 @@ FORMAT KELUARAN (satu baris per murid):
     function hideLoadingScreen() {
       const screen = document.getElementById('loading-screen');
       if (screen) { screen.classList.add('opacity-0', 'pointer-events-none'); setTimeout(() => screen.classList.add('hidden'), 500); }
+      isInitialLoadInProgress = false; // FIX: setelah loading awal selesai, overlay sync boleh tampil normal untuk aksi berikutnya
     }
 
     // ============================================================
@@ -4169,12 +4322,20 @@ if (!entry) {
       if (!semuaTerjawab) {
         const emptyNums = [];
         for (let i = 1; i <= numQuestions; i++) { if (!bubbleAnswers[i]) emptyNums.push(i); }
-        triggerCustomModal('Ada Soal Belum Dijawab', `Soal nomor ${emptyNums.join(', ')} belum dijawab. Tetap kirim?`, 'alert-triangle', () => {
-          verifyStudentPassword(identitas, () => {
-            setButtonLoading(btn, true, 'Mengirim...');
-            prosesSimpanPG(identitas, jwbString, () => { bubbleAnswers = {}; generatePGInputs(); switchPGMode(currentPGMode); }, btn);
-          });
-        }, 'indigo');
+        const soalKata = emptyNums.length === 1 ? 'soal' : 'soal';
+        triggerCustomModal(
+          'Jawaban Belum Lengkap',
+          `Ada ${emptyNums.length} ${soalKata} yang belum dijawab. Soal tersebut akan dihitung sebagai kosong. Tetap kirim jawaban sekarang?`,
+          'alert-triangle',
+          () => {
+            verifyStudentPassword(identitas, () => {
+              setButtonLoading(btn, true, 'Mengirim...');
+              prosesSimpanPG(identitas, jwbString, () => { bubbleAnswers = {}; generatePGInputs(); switchPGMode(currentPGMode); }, btn);
+            });
+          },
+          'amber',
+          emptyNums
+        );
         return;
       }
       verifyStudentPassword(identitas, () => {
@@ -4378,11 +4539,20 @@ if (!entry) {
       const statusEl = document.getElementById(`mic-status-${idx}`);
       const field = document.getElementById(`esai-answer-field-${idx}`);
 
-      recognition.onstart = () => {
+      // FIX: aktifkan tampilan "mendengarkan" SEKETIKA saat tombol ditekan,
+      // jangan menunggu event onstart yang kadang telat muncul di HP/Android
+      const setMicActiveUI = () => {
         if (micBtn) micBtn.className = "p-2.5 rounded-full bg-rose-600 text-white hover:bg-rose-700 transition-all shadow-sm animate-pulse shrink-0";
         setLucideIcon(micBtn, 'square');
         if (statusEl) statusEl.classList.remove('hidden');
       };
+      const setMicInactiveUI = () => {
+        if (micBtn) micBtn.className = "p-2 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-all shadow-sm";
+        setLucideIcon(micBtn, 'mic');
+        if (statusEl) statusEl.classList.add('hidden');
+      };
+
+      recognition.onstart = setMicActiveUI;
 
       recognition.onresult = (event) => {
         let transcript = '';
@@ -4407,16 +4577,18 @@ if (!entry) {
       };
 
       recognition.onend = () => {
-        if (micBtn) micBtn.className = "p-2 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-all shadow-sm";
-        setLucideIcon(micBtn, 'mic');
-        if (statusEl) statusEl.classList.add('hidden');
+        setMicInactiveUI();
         activeSpeechRecognition = null;
         activeSpeechQuestionIdx = null;
       };
 
+      setMicActiveUI();
       try {
         recognition.start();
       } catch (e) {
+        setMicInactiveUI();
+        activeSpeechRecognition = null;
+        activeSpeechQuestionIdx = null;
         showToast('Gagal memulai perekaman suara.', 'error');
       }
     }
@@ -4568,11 +4740,20 @@ if (!entry) {
       const statusEl = document.getElementById('mic-status-guru-esai');
       const field = document.getElementById('config-esai-add-text');
 
-      recognition.onstart = () => {
+      // FIX: aktifkan tampilan "mendengarkan" SEKETIKA saat tombol ditekan,
+      // jangan menunggu event onstart yang kadang telat muncul di HP/Android
+      const setMicActiveUI = () => {
         if (micBtn) micBtn.className = "p-2 rounded-full bg-rose-600 text-white hover:bg-rose-700 transition-all shadow-sm animate-pulse";
         setLucideIcon(micBtn, 'square');
         if (statusEl) statusEl.classList.remove('hidden');
       };
+      const setMicInactiveUI = () => {
+        if (micBtn) micBtn.className = "p-2 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-all shadow-sm";
+        setLucideIcon(micBtn, 'mic');
+        if (statusEl) statusEl.classList.add('hidden');
+      };
+
+      recognition.onstart = setMicActiveUI;
 
       recognition.onresult = (event) => {
         let transcript = '';
@@ -4597,15 +4778,16 @@ if (!entry) {
       };
 
       recognition.onend = () => {
-        if (micBtn) micBtn.className = "p-2 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-all shadow-sm";
-        setLucideIcon(micBtn, 'mic');
-        if (statusEl) statusEl.classList.add('hidden');
+        setMicInactiveUI();
         activeSpeechRecognitionGuruEsai = null;
       };
 
+      setMicActiveUI();
       try {
         recognition.start();
       } catch (e) {
+        setMicInactiveUI();
+        activeSpeechRecognitionGuruEsai = null;
         showToast('Gagal memulai perekaman suara.', 'error');
       }
     }
@@ -4704,11 +4886,15 @@ if (!entry) {
       const micBtn = document.getElementById('bulk-mic-btn');
       const statusEl = document.getElementById('bulk-mic-status');
 
-      recognition.onstart = () => {
+      // FIX: aktifkan tampilan "mendengarkan" SEKETIKA saat tombol ditekan,
+      // jangan menunggu event onstart yang kadang telat muncul di HP/Android
+      const setMicActiveUI = () => {
         if (micBtn) micBtn.className = "p-2.5 rounded-full bg-rose-600 text-white hover:bg-rose-700 transition-all shadow-sm animate-pulse shrink-0";
         setLucideIcon(micBtn, 'square');
         if (statusEl) statusEl.classList.remove('hidden');
       };
+
+      recognition.onstart = setMicActiveUI;
 
       recognition.onresult = (event) => {
         let transcript = '';
@@ -4735,15 +4921,16 @@ if (!entry) {
       };
 
       recognition.onend = () => {
-        if (micBtn) micBtn.className = "p-2.5 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-all shadow-sm shrink-0";
-        setLucideIcon(micBtn, 'mic');
-        if (statusEl) statusEl.classList.add('hidden');
+        resetBulkMicUI();
         activeBulkSpeechRecognition = null;
       };
 
+      setMicActiveUI();
       try {
         recognition.start();
       } catch (e) {
+        resetBulkMicUI();
+        activeBulkSpeechRecognition = null;
         showToast('Gagal memulai perekaman suara.', 'error');
       }
     }
@@ -4844,16 +5031,15 @@ if (!entry) {
       if (!identitas) return;
       const listSoal = Array.isArray(appData.config.soalEsaiList) ? appData.config.soalEsaiList : [];
       if (listSoal.length === 0) { showToast('Tidak ada soal esai untuk dijawab.', 'warning'); return; }
-      const doKirim = () => {
-        let compiledAnswers = [];
-        let anyEmpty = false;
+
+      // Kirim jawaban ke server/appData (dipanggil setelah konfirmasi jika perlu)
+      const eksekusiKirim = () => {
+        const compiledAnswers = [];
         for (let i = 0; i < listSoal.length; i++) {
           const field = document.getElementById(`esai-answer-field-${i}`);
           const val = field ? field.value.trim() : '';
-          if (!val) anyEmpty = true;
           compiledAnswers.push(`[SOAL-${i + 1}]: ${val}`);
         }
-        if (anyEmpty && !confirm('Terdapat jawaban esai yang masih kosong. Tetap kirimkan?')) return;
         const finalAnswerText = compiledAnswers.join('\n\n');
         const payload = { sekolah: identitas.sekolah, kelas: identitas.kelas, nama: identitas.nama, jawaban: finalAnswerText };
         if (isGAS) {
@@ -4870,6 +5056,22 @@ if (!entry) {
           esaiEditUnlocked.delete(identitas.nama);
           showToast(`[Demo] Jawaban Esai ${identitas.nama} disimpan! Status: Belum dinilai.`, 'success');
           clearEssayInputFields(); buildUI(); setMainNav('MURID'); setSubNav('nilai');
+        }
+      };
+
+      const doKirim = () => {
+        // Cek dulu soal mana yang jawabannya masih kosong
+        const emptyItems = [];
+        for (let i = 0; i < listSoal.length; i++) {
+          const field = document.getElementById(`esai-answer-field-${i}`);
+          const val = field ? field.value.trim() : '';
+          if (!val) emptyItems.push({ nomor: i + 1, teks: listSoal[i] });
+        }
+
+        if (emptyItems.length > 0) {
+          triggerEsaiIncompleteModal(emptyItems, eksekusiKirim);
+        } else {
+          eksekusiKirim();
         }
       };
       verifyStudentPassword(identitas, doKirim);
