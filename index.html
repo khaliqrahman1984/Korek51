@@ -654,15 +654,25 @@
             <div>
               <div class="flex items-center justify-between mb-2">
                 <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Belum Mengirim Jawaban PG</h4>
-                <span id="belum-pg-count" class="px-2 py-0.5 text-[10px] font-extrabold bg-rose-100 text-rose-700 rounded-full">0</span>
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <button type="button" onclick="shareBelumMengumpul('pg')" title="Bagikan daftar murid yang belum mengumpulkan PG" class="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors">
+                    <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <span id="belum-pg-count" class="px-2 py-0.5 text-[10px] font-extrabold bg-rose-100 text-rose-700 rounded-full">0</span>
+                </div>
               </div>
               <div id="belum-pg-list" class="space-y-1 max-h-48 overflow-y-auto"></div>
             </div>
             <div>
               <div class="flex items-center justify-between mb-2">
-  <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Belum Mengirim Jawaban Esai</h4>
-  <span id="belum-esai-count" class="px-2 py-0.5 text-[10px] font-extrabold bg-sky-100 text-sky-700 rounded-full">0</span>
-</div>
+                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Belum Mengirim Jawaban Esai</h4>
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <button type="button" onclick="shareBelumMengumpul('esai')" title="Bagikan daftar murid yang belum mengumpulkan Esai" class="p-1.5 rounded-lg text-sky-500 hover:text-sky-700 hover:bg-sky-50 transition-colors">
+                    <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <span id="belum-esai-count" class="px-2 py-0.5 text-[10px] font-extrabold bg-sky-100 text-sky-700 rounded-full">0</span>
+                </div>
+              </div>
               <div id="belum-esai-list" class="space-y-1 max-h-48 overflow-y-auto"></div>
             </div>
           </div>
@@ -1262,7 +1272,7 @@ FORMAT KELUARAN (satu baris per murid):
     // GANTI URL DI BAWAH INI dengan URL deployment Apps Script Anda
     // (hasil dari Deploy > Manage deployments, yang diakhiri /exec)
     // ============================================================
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbywrCknSqWvaxk6Xp2AAsOPq73ON_fbltdPHp-Ty_3fftcLoo5murRHXGohezactsNT/exec';
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwLSrd6KHIF2Iaor2j-594PMjCOfvazrn2t9AaKLwShRlTeKFkDE-4GV83iYBnbXOGQ/exec';
 
     // ============================================================
     // SYNC OVERLAY — loading modern saat kirim/ambil data Spreadsheet
@@ -1345,6 +1355,8 @@ FORMAT KELUARAN (satu baris per murid):
     let sortModeEsai = 0;
     let sortModeGabungan = 0;
     let sortModeBelumMengerjakan = 1;
+    let belumMengumpulPGList = [];   // daftar murid yang belum mengirim jawaban PG (untuk tombol Bagikan)
+    let belumMengumpulEsaiList = []; // daftar murid yang belum mengirim jawaban Esai (untuk tombol Bagikan)
     let cheatViolationsLog = {}; // { "Nama Murid": jumlahPelanggaran }
     let lastCheatViolationTime = 0;
     let pgKeyMatrixState = {};
@@ -5384,6 +5396,11 @@ if (!entry) {
       const belumPG = sortBelumMengerjakanList(filteredMurid.filter(m => !namaPG.has(norm(m.nama))));
       const belumEsai = sortBelumMengerjakanList(filteredMurid.filter(m => !namaEsai.has(norm(m.nama))));
 
+      // FIX: simpan hasil filter agar bisa dipakai tombol "Bagikan" di samping jumlah
+      belumMengumpulPGList = belumPG;
+      belumMengumpulEsaiList = belumEsai;
+      lucide.createIcons();
+
       if (countPGEl) countPGEl.textContent = belumPG.length;
 if (countEsaiEl) countEsaiEl.textContent = belumEsai.length;
 
@@ -5414,6 +5431,65 @@ const renderList = (container, arr, colorTheme) => {
 renderList(listPGEl, belumPG, 'rose');
 // Ubah argumen warna di bawah ini menjadi 'sky'
 renderList(listEsaiEl, belumEsai, 'sky');
+    }
+
+    // ============================================================
+    // BAGIKAN DAFTAR MURID YANG BELUM MENGUMPULKAN (PG / ESAI)
+    // ============================================================
+    function buildBelumMengumpulMessage(jenis) {
+      const isPG = jenis === 'pg';
+      const list = isPG ? belumMengumpulPGList : belumMengumpulEsaiList;
+      const judul = isPG
+        ? 'Yang belum mengumpulkan tugas Pilihan Ganda'
+        : 'Yang belum mengumpulkan tugas Esai';
+      const daftar = list.map((m, i) => {
+        const kelasRaw = String(m.kelas || '').trim();
+        // Tambahkan kata "Kelas" di depan, kecuali sudah tertulis (mis. "Kelas 6")
+        const kelasTeks = kelasRaw ? (/^kelas\b/i.test(kelasRaw) ? kelasRaw : `Kelas ${kelasRaw}`) : '';
+        const ket = `${m.sekolah || ''}${m.sekolah && kelasTeks ? ' | ' : ''}${kelasTeks}`.trim();
+        return `${i + 1}. ${m.nama}${ket ? ' (' + ket + ')' : ''}`;
+      }).join('\n');
+      return `${judul}\n\n${daftar}`;
+    }
+
+    async function shareBelumMengumpul(jenis) {
+      const list = jenis === 'pg' ? belumMengumpulPGList : belumMengumpulEsaiList;
+      if (!Array.isArray(list) || list.length === 0) {
+        showToast('Semua murid sudah mengumpulkan. Tidak ada yang perlu dibagikan.', 'info');
+        return;
+      }
+      const pesan = buildBelumMengumpulMessage(jenis);
+      if (navigator.share) {
+        try {
+          await navigator.share({ text: pesan });
+          return;
+        } catch (err) {
+          if (err && err.name === 'AbortError') return;
+        }
+      }
+      // Fallback: salin ke clipboard
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(pesan);
+          showToast('Daftar tersalin ke clipboard! Siap ditempel di WhatsApp/Telegram.', 'success');
+          return;
+        }
+        throw new Error('Clipboard API tidak didukung.');
+      } catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = pesan;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        try {
+          document.execCommand('copy');
+          showToast('Daftar tersalin ke clipboard!', 'success');
+        } catch (e2) {
+          showToast('Gagal membagikan/menyalin daftar secara otomatis.', 'warning');
+        }
+        document.body.removeChild(ta);
+      }
     }
 
     function renderTabelNilai() {
