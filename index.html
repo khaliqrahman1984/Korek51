@@ -1272,7 +1272,7 @@ FORMAT KELUARAN (satu baris per murid):
     // GANTI URL DI BAWAH INI dengan URL deployment Apps Script Anda
     // (hasil dari Deploy > Manage deployments, yang diakhiri /exec)
     // ============================================================
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwFko2OTo_sxzlES8oz_WCsfvc5Q2oB9bJP1RE09V5n6lqalYX2NFezRF7lrSptlYbY/exec';
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzRJhHruU4vVqv8EWPLdMuCaUGTYluIBFAEcAU2MtfWL6MvMSeVCLeoL12eNt-ryXv3/exec';
 
     // ============================================================
     // SYNC OVERLAY — loading modern saat kirim/ambil data Spreadsheet
@@ -5458,7 +5458,7 @@ renderList(listEsaiEl, belumEsai, 'sky');
       return `${judul}\n\n${daftar}`;
     }
 
-    async function shareBelumMengumpul(jenis) {
+       async function shareBelumMengumpul(jenis) {
       const list = jenis === 'pg' ? belumMengumpulPGList : belumMengumpulEsaiList;
       if (!Array.isArray(list) || list.length === 0) {
         showToast('Semua murid sudah mengumpulkan. Tidak ada yang perlu dibagikan.', 'info');
@@ -5467,24 +5467,39 @@ renderList(listEsaiEl, belumEsai, 'sky');
       const pesan = buildBelumMengumpulMessage(jenis);
       // FIX: navigator.share() memicu event "blur" pada window (membuka lembar
       // berbagi native OS). Jika Anti-Cheat aktif, blur ini salah terdeteksi
-      // sebagai kecurangan sehingga modal peringatan muncul dan mengganggu/
-      // menggagalkan proses berbagi murid. Nonaktifkan sementara deteksi
-      // Anti-Cheat selama proses berbagi berlangsung.
+      // sebagai kecurangan. Nonaktifkan sementara deteksi Anti-Cheat selama
+      // proses berbagi berlangsung.
       suppressAntiCheatBlur = true;
       try {
+        // FIX UTAMA: Buka LANGSUNG ke WhatsApp lewat link wa.me, bukan lewat
+        // navigator.share(). navigator.share() sering GAGAL DIAM-DIAM atau
+        // tidak tersedia di banyak browser/WebView (mis. saat berjalan di
+        // dalam iframe/WebView tanpa izin "web-share"), sehingga tombol
+        // terasa tidak berfungsi. Membuka wa.me jauh lebih andal karena
+        // hanya memerlukan tab/browser biasa, dan langsung mengarah ke
+        // aplikasi WhatsApp di HP atau WhatsApp Web di desktop.
+        const waUrl = `https://wa.me/?text=${encodeURIComponent(pesan)}`;
+        const win = window.open(waUrl, '_blank', 'noopener,noreferrer');
+        if (win) {
+          showToast('Membuka WhatsApp...', 'success');
+          return;
+        }
+        throw new Error('Popup diblokir oleh browser.');
+      } catch (err) {
+        // Fallback 1: coba navigator.share() (jika didukung perangkat)
         if (navigator.share) {
           try {
             await navigator.share({ text: pesan });
             return;
-          } catch (err) {
-            if (err && err.name === 'AbortError') return;
+          } catch (err2) {
+            if (err2 && err2.name === 'AbortError') return;
           }
         }
-        // Fallback: salin ke clipboard
+        // Fallback 2: salin ke clipboard agar bisa ditempel manual
         try {
           if (navigator.clipboard && navigator.clipboard.writeText) {
             await navigator.clipboard.writeText(pesan);
-            showToast('Daftar tersalin ke clipboard! Siap ditempel di WhatsApp/Telegram.', 'success');
+            showToast('Popup diblokir. Daftar tersalin ke clipboard — silakan tempel manual di WhatsApp.', 'warning');
             return;
           }
           throw new Error('Clipboard API tidak didukung.');
@@ -5504,10 +5519,6 @@ renderList(listEsaiEl, belumEsai, 'sky');
           document.body.removeChild(ta);
         }
       } finally {
-        // FIX: beri jeda sebelum mengaktifkan kembali Anti-Cheat, karena event
-        // blur/visibilitychange dari sistem kadang baru terpicu beberapa saat
-        // setelah promise navigator.share() selesai (terutama saat kembali
-        // dari lembar berbagi WhatsApp/Telegram di HP).
         setTimeout(() => { suppressAntiCheatBlur = false; }, 1000);
       }
     }
