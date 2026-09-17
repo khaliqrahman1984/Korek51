@@ -1272,7 +1272,7 @@ FORMAT KELUARAN (satu baris per murid):
     // GANTI URL DI BAWAH INI dengan URL deployment Apps Script Anda
     // (hasil dari Deploy > Manage deployments, yang diakhiri /exec)
     // ============================================================
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzWLIMqTBWLzxcMXNn5-ZNe1imn5tzxjqwA_KEV6RDaZmGnl-lHYQ2d2c-DWY5xq6TM/exec';
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxWOn3rI3b412MV0JzOPq4OZnrwtaMLaPl12DBy_FURr9jsxUjmizzKUV6xRw5diCHv/exec';
 
     // ============================================================
     // SYNC OVERLAY — loading modern saat kirim/ambil data Spreadsheet
@@ -5496,9 +5496,14 @@ renderList(listEsaiEl, belumEsai, 'sky');
         // terasa tidak berfungsi. Membuka wa.me jauh lebih andal karena
         // hanya memerlukan tab/browser biasa, dan langsung mengarah ke
         // aplikasi WhatsApp di HP atau WhatsApp Web di desktop.
-        // FIX: pakai location.href (bukan window.open) agar WhatsApp langsung
-        // terbuka tanpa memicu dialog izin popup dari browser.
-        const waUrl = `https://wa.me/?text=${encodeURIComponent(pesan)}`;
+        // FIX: gunakan skema deep-link "whatsapp://" langsung ke aplikasi
+        // (bukan link web wa.me) agar OS tidak menampilkan dialog pilihan
+        // aplikasi ("Buka dengan Browser/WhatsApp?"). Skema ini langsung
+        // memanggil aplikasi WhatsApp jika terpasang di perangkat.
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        const waUrl = isMobile
+          ? `whatsapp://send?text=${encodeURIComponent(pesan)}`
+          : `https://web.whatsapp.com/send?text=${encodeURIComponent(pesan)}`;
         window.location.href = waUrl;
         showToast('Membuka WhatsApp...', 'success');
         return;
