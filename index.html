@@ -1272,7 +1272,7 @@ FORMAT KELUARAN (satu baris per murid):
     // GANTI URL DI BAWAH INI dengan URL deployment Apps Script Anda
     // (hasil dari Deploy > Manage deployments, yang diakhiri /exec)
     // ============================================================
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzRJhHruU4vVqv8EWPLdMuCaUGTYluIBFAEcAU2MtfWL6MvMSeVCLeoL12eNt-ryXv3/exec';
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzWLIMqTBWLzxcMXNn5-ZNe1imn5tzxjqwA_KEV6RDaZmGnl-lHYQ2d2c-DWY5xq6TM/exec';
 
     // ============================================================
     // SYNC OVERLAY — loading modern saat kirim/ambil data Spreadsheet
@@ -5442,20 +5442,38 @@ renderList(listEsaiEl, belumEsai, 'sky');
     function buildBelumMengumpulMessage(jenis) {
       const isPG = jenis === 'pg';
       const list = isPG ? belumMengumpulPGList : belumMengumpulEsaiList;
-      // FIX: sisipkan nama mata pelajaran (sesuai yang diisi guru di aplikasi) ke judul pesan
       const mapelTeks = isPG ? (appData.config.mapel || '').trim() : (appData.config.mapelEsai || '').trim();
       const judulDasar = isPG
         ? 'Yang belum mengumpulkan tugas Pilihan Ganda'
         : 'Yang belum mengumpulkan tugas Esai';
       const judul = mapelTeks ? `${judulDasar} ${mapelTeks}` : judulDasar;
-      const daftar = list.map((m, i) => {
+
+      // FIX: kelompokkan murid berdasarkan Sekolah + Kelas, supaya keterangan
+      // sekolah & kelas tidak diulang-ulang di setiap nama, cukup ditulis
+      // sekali sebagai judul kelompok, lalu daftar nama murid di bawahnya.
+      const groups = {};
+      const groupOrder = [];
+      list.forEach(m => {
         const kelasRaw = String(m.kelas || '').trim();
-        // Tambahkan kata "Kelas" di depan, kecuali sudah tertulis (mis. "Kelas 6")
         const kelasTeks = kelasRaw ? (/^kelas\b/i.test(kelasRaw) ? kelasRaw : `Kelas ${kelasRaw}`) : '';
-        const ket = `${m.sekolah || ''}${m.sekolah && kelasTeks ? ' | ' : ''}${kelasTeks}`.trim();
-        return `${i + 1}. ${m.nama}${ket ? ' (' + ket + ')' : ''}`;
-      }).join('\n');
-      return `${judul}\n\n${daftar}`;
+        const sekolahTeks = String(m.sekolah || '').trim();
+        const groupKey = `${kelasTeks}|||${sekolahTeks}`;
+        if (!groups[groupKey]) {
+          groups[groupKey] = { kelasTeks, sekolahTeks, murid: [] };
+          groupOrder.push(groupKey);
+        }
+        groups[groupKey].murid.push(m.nama);
+      });
+
+      const blokKelompok = groupOrder.map(key => {
+        const g = groups[key];
+        const headerParts = [g.kelasTeks, g.sekolahTeks].filter(Boolean);
+        const header = headerParts.join(' | ');
+        const daftarNama = g.murid.map((nama, i) => `${i + 1}. ${nama}`).join('\n');
+        return header ? `${header}\n${daftarNama}` : daftarNama;
+      }).join('\n\n');
+
+      return `${judul}\n\n${blokKelompok}`;
     }
 
        async function shareBelumMengumpul(jenis) {
@@ -5478,13 +5496,12 @@ renderList(listEsaiEl, belumEsai, 'sky');
         // terasa tidak berfungsi. Membuka wa.me jauh lebih andal karena
         // hanya memerlukan tab/browser biasa, dan langsung mengarah ke
         // aplikasi WhatsApp di HP atau WhatsApp Web di desktop.
+        // FIX: pakai location.href (bukan window.open) agar WhatsApp langsung
+        // terbuka tanpa memicu dialog izin popup dari browser.
         const waUrl = `https://wa.me/?text=${encodeURIComponent(pesan)}`;
-        const win = window.open(waUrl, '_blank', 'noopener,noreferrer');
-        if (win) {
-          showToast('Membuka WhatsApp...', 'success');
-          return;
-        }
-        throw new Error('Popup diblokir oleh browser.');
+        window.location.href = waUrl;
+        showToast('Membuka WhatsApp...', 'success');
+        return;
       } catch (err) {
         // Fallback 1: coba navigator.share() (jika didukung perangkat)
         if (navigator.share) {
