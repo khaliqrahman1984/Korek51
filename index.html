@@ -1365,6 +1365,7 @@ FORMAT KELUARAN (satu baris per murid):
     let esaiEditUnlocked = new Set();
     let bulkPasswordPendingCallback = null;
     let bulkUniquePasswordMap = {};
+    let suppressAntiCheatBlur = false; // FIX: cegah Anti-Cheat salah deteksi saat navigator.share() memicu blur
 
     const SIDEBAR_ITEMS = {
       'MURID': [
@@ -1533,9 +1534,11 @@ FORMAT KELUARAN (satu baris per murid):
     // ============================================================
     function registerAntiCheatListeners() {
       document.addEventListener('visibilitychange', () => {
+        if (suppressAntiCheatBlur) return; // FIX: abaikan saat sedang dalam proses berbagi (share)
         if (document.visibilityState === 'hidden' && appData.config.antiCheat && selectedNav === 'MURID') handleCheatViolation();
       });
       window.addEventListener('blur', () => {
+        if (suppressAntiCheatBlur) return; // FIX: abaikan saat sedang dalam proses berbagi (share)
         if (appData.config.antiCheat && selectedNav === 'MURID') handleCheatViolation();
       });
     }
@@ -5439,9 +5442,12 @@ renderList(listEsaiEl, belumEsai, 'sky');
     function buildBelumMengumpulMessage(jenis) {
       const isPG = jenis === 'pg';
       const list = isPG ? belumMengumpulPGList : belumMengumpulEsaiList;
-      const judul = isPG
+      // FIX: sisipkan nama mata pelajaran (sesuai yang diisi guru di aplikasi) ke judul pesan
+      const mapelTeks = isPG ? (appData.config.mapel || '').trim() : (appData.config.mapelEsai || '').trim();
+      const judulDasar = isPG
         ? 'Yang belum mengumpulkan tugas Pilihan Ganda'
         : 'Yang belum mengumpulkan tugas Esai';
+      const judul = mapelTeks ? `${judulDasar} ${mapelTeks}` : judulDasar;
       const daftar = list.map((m, i) => {
         const kelasRaw = String(m.kelas || '').trim();
         // Tambahkan kata "Kelas" di depan, kecuali sudah tertulis (mis. "Kelas 6")
@@ -5459,36 +5465,50 @@ renderList(listEsaiEl, belumEsai, 'sky');
         return;
       }
       const pesan = buildBelumMengumpulMessage(jenis);
-      if (navigator.share) {
-        try {
-          await navigator.share({ text: pesan });
-          return;
-        } catch (err) {
-          if (err && err.name === 'AbortError') return;
-        }
-      }
-      // Fallback: salin ke clipboard
+      // FIX: navigator.share() memicu event "blur" pada window (membuka lembar
+      // berbagi native OS). Jika Anti-Cheat aktif, blur ini salah terdeteksi
+      // sebagai kecurangan sehingga modal peringatan muncul dan mengganggu/
+      // menggagalkan proses berbagi murid. Nonaktifkan sementara deteksi
+      // Anti-Cheat selama proses berbagi berlangsung.
+      suppressAntiCheatBlur = true;
       try {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          await navigator.clipboard.writeText(pesan);
-          showToast('Daftar tersalin ke clipboard! Siap ditempel di WhatsApp/Telegram.', 'success');
-          return;
+        if (navigator.share) {
+          try {
+            await navigator.share({ text: pesan });
+            return;
+          } catch (err) {
+            if (err && err.name === 'AbortError') return;
+          }
         }
-        throw new Error('Clipboard API tidak didukung.');
-      } catch (e) {
-        const ta = document.createElement('textarea');
-        ta.value = pesan;
-        ta.style.position = 'fixed';
-        ta.style.opacity = '0';
-        document.body.appendChild(ta);
-        ta.focus(); ta.select();
+        // Fallback: salin ke clipboard
         try {
-          document.execCommand('copy');
-          showToast('Daftar tersalin ke clipboard!', 'success');
-        } catch (e2) {
-          showToast('Gagal membagikan/menyalin daftar secara otomatis.', 'warning');
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(pesan);
+            showToast('Daftar tersalin ke clipboard! Siap ditempel di WhatsApp/Telegram.', 'success');
+            return;
+          }
+          throw new Error('Clipboard API tidak didukung.');
+        } catch (e) {
+          const ta = document.createElement('textarea');
+          ta.value = pesan;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.focus(); ta.select();
+          try {
+            document.execCommand('copy');
+            showToast('Daftar tersalin ke clipboard!', 'success');
+          } catch (e2) {
+            showToast('Gagal membagikan/menyalin daftar secara otomatis.', 'warning');
+          }
+          document.body.removeChild(ta);
         }
-        document.body.removeChild(ta);
+      } finally {
+        // FIX: beri jeda sebelum mengaktifkan kembali Anti-Cheat, karena event
+        // blur/visibilitychange dari sistem kadang baru terpicu beberapa saat
+        // setelah promise navigator.share() selesai (terutama saat kembali
+        // dari lembar berbagi WhatsApp/Telegram di HP).
+        setTimeout(() => { suppressAntiCheatBlur = false; }, 1000);
       }
     }
 
