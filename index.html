@@ -1272,7 +1272,7 @@ FORMAT KELUARAN (satu baris per murid):
     // GANTI URL DI BAWAH INI dengan URL deployment Apps Script Anda
     // (hasil dari Deploy > Manage deployments, yang diakhiri /exec)
     // ============================================================
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxWOn3rI3b412MV0JzOPq4OZnrwtaMLaPl12DBy_FURr9jsxUjmizzKUV6xRw5diCHv/exec';
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycby9ZGzmVQlVf6JhGyv-blDVzir_9e4UOpVr8_5OkWIr7IdLW9JPzQczZ7gOrPXNaZPq/exec';
 
     // ============================================================
     // SYNC OVERLAY — loading modern saat kirim/ambil data Spreadsheet
@@ -5714,9 +5714,18 @@ renderList(listEsaiEl, belumEsai, 'sky');
     function toPlainAsciiForPdf(str) {
       if (str === null || str === undefined) return '';
       return String(str)
+        .replace(/[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/g, ' ')  // aneka spasi khusus -> spasi biasa
+        .replace(/[\u2018\u2019\u201A\u201B\u2032]/g, "'")               // kutip tunggal melengkung
+        .replace(/[\u201C\u201D\u201E\u201F\u2033]/g, '"')               // kutip ganda melengkung
+        .replace(/[\u2010-\u2015\u2212]/g, '-')                          // aneka tanda pisah/strip
+        .replace(/\u2026/g, '...')                                       // elipsis
+        .replace(/[\u2022\u25CF\u25AA]/g, '-')                           // bullet
+        .replace(/\r\n?/g, '\n')                                         // samakan baris baru
+        .replace(/\t/g, ' ')
         .normalize('NFKD')                // urai font unicode "gaya" & huruf beraksen ke bentuk dasar
         .replace(/[\u0300-\u036f]/g, '')  // buang tanda diakritik hasil urai (mis. é -> e)
-        .replace(/[^\x20-\x7E]/g, '');    // buang sisa karakter non-ASCII (emoji, zero-width, dll)
+        .replace(/[^\x20-\x7E\n]/g, '')   // buang sisa non-ASCII (emoji, zero-width, dll), baris baru dipertahankan
+        .replace(/[ ]{2,}/g, ' ');        // rapikan spasi ganda
     }
 
     function printHtmlContent(html) {
@@ -6225,7 +6234,10 @@ renderList(listEsaiEl, belumEsai, 'sky');
       doc.setFont('helvetica', 'normal');
       doc.text(`${mapel} - Total Peserta: ${total}`, pageWidth / 2, 21, { align: 'center' });
 
-      const bodySiswa = pgList.filter(Boolean).map(r => {
+      const bodySiswa = pgList.filter(Boolean)
+        .slice()
+        .sort((a, b) => (a.nama || '').localeCompare(b.nama || '', 'id', { sensitivity: 'base' }))
+        .map(r => {
         const nilai = parseFloat(r.nilai||0);
         const status = nilai >= kkm ? 'TUNTAS' : 'REMIDI';
         return [toPlainAsciiForPdf(r.nama)||'', r.benar||0, r.salah||0, r.kosong||0, nilai.toFixed(2), status, (r.jawaban||'').toUpperCase()];
@@ -6384,37 +6396,45 @@ renderList(listEsaiEl, belumEsai, 'sky');
       doc.text('ANALISIS JAWABAN ESAI', pageWidth / 2, 15, { align: 'center' });
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Mata Pelajaran: ${mapelEsai}`, pageWidth / 2, 21, { align: 'center' });
+      doc.text(`Mata Pelajaran: ${toPlainAsciiForPdf(mapelEsai)}`, pageWidth / 2, 21, { align: 'center' });
 
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const maxTextWidth = pageWidth - 28;   // margin kiri 14 + kanan 14
+      const lineH = 4.6;
       let curY = 27;
-      if (stimulus) {
-        doc.setFont('helvetica', 'bold');
-        doc.text('Teks Bacaan / Stimulus:', 14, curY);
-        doc.setFont('helvetica', 'normal');
-        const wrapped = doc.splitTextToSize(stimulus, 180);
-        doc.text(wrapped, 14, curY + 5);
-        curY += 5 + wrapped.length * 4.2 + 4;
-      }
-      doc.setFont('helvetica', 'bold');
-      doc.text('Daftar Pertanyaan Esai:', 14, curY);
-      doc.setFont('helvetica', 'normal');
-      soalList.forEach((q, qi) => {
-        curY += 5;
-        const wrapped = doc.splitTextToSize(`${qi+1}. ${q}`, 180);
-        doc.text(wrapped, 14, curY);
-        curY += (wrapped.length - 1) * 4.2;
 
-        curY += 4.5;
+      // Tulis teks panjang: dibungkus sesuai lebar halaman, pindah halaman otomatis jika tidak muat
+      const tulisTeks = (teks, bold) => {
+        doc.setFont('helvetica', bold ? 'bold' : 'normal');
+        doc.setFontSize(10);
+        const lines = doc.splitTextToSize(toPlainAsciiForPdf(teks), maxTextWidth);
+        lines.forEach(line => {
+          if (curY > pageHeight - 15) { doc.addPage(); curY = 15; }
+          doc.text(line, 14, curY);
+          curY += lineH;
+        });
+      };
+
+      if (stimulus) {
+        tulisTeks('Teks Bacaan / Stimulus:', true);
+        tulisTeks(stimulus, false);
+        curY += 3;
+      }
+      tulisTeks('Daftar Pertanyaan Esai:', true);
+      soalList.forEach((q, qi) => {
+        tulisTeks(`${qi+1}. ${q}`, false);
         const kunciSoal = getKunciJawabanUntukSoal(esaiList, qi);
-        doc.setFont('helvetica', 'bold');
-        const wrappedKunci = doc.splitTextToSize(`Kunci ${qi+1}: ${kunciSoal || '-'}`, 180);
-        doc.text(wrappedKunci, 14, curY);
-        doc.setFont('helvetica', 'normal');
-        curY += (wrappedKunci.length - 1) * 4.2;
+        tulisTeks(`Kunci ${qi+1}: ${kunciSoal || '-'}`, true);
+        curY += 1.5;
       });
+      doc.setFont('helvetica', 'normal');
 
       const body = [];
-      esaiList.forEach((r, idx) => {
+      const esaiListUrut = esaiList
+        .filter(Boolean)
+        .slice()
+        .sort((a, b) => (a.nama || '').localeCompare(b.nama || '', 'id', { sensitivity: 'base' }));
+      esaiListUrut.forEach((r, idx) => {
         if (!r) return;
         const sudah = !!r.sudahDinilai && r.nilai !== null;
         const totalNilai = sudah ? parseFloat(r.nilai).toFixed(2) : '-';
@@ -6486,7 +6506,10 @@ renderList(listEsaiEl, belumEsai, 'sky');
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
         doc.text(`Bobot PG: ${bobotPG}% | Bobot Esai: ${bobotEsai}% | Total Peserta: ${allStudents.length}`, pageWidth / 2, 21, { align: 'center' });
-        const body = allStudents.map((nama, idx) => {
+        const allStudentsUrut = allStudents
+          .slice()
+          .sort((a, b) => a.localeCompare(b, 'id', { sensitivity: 'base' }));
+        const body = allStudentsUrut.map((nama, idx) => {
           const pg = pgList.find(r => r?.nama === nama);
           const esai = esaiList.find(r => r?.nama === nama);
           const scorePG = pg ? parseFloat(pg.nilai) || 0 : 0;
