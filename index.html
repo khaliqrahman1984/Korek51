@@ -1294,7 +1294,7 @@ FORMAT KELUARAN (satu baris per murid):
     // GANTI URL DI BAWAH INI dengan URL deployment Apps Script Anda
     // (hasil dari Deploy > Manage deployments, yang diakhiri /exec)
     // ============================================================
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyI5uT4_YXK5Bhae43_zSa1icuMuBtDUGBAPyZnvHrnz1x0fVun_jTVPVKtf0BJAYQ/exec';
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwpXaOI0755oiys4LTtJg9ixokAmbRzXcqfc3mRehG3fPnusd1JHtDJQ8yVI1RHImAH/exec';
 
     // ============================================================
     // SYNC OVERLAY — loading modern saat kirim/ambil data Spreadsheet
@@ -1402,7 +1402,8 @@ FORMAT KELUARAN (satu baris per murid):
         { id: 'guru-soal-esai', label: 'Soal Esai', icon: 'book' },
         { id: 'guru-koreksi-ai', label: 'Koreksi AI', icon: 'wand' },
         { id: 'guru-pengaturan', label: 'Pengaturan', icon: 'settings' },
-        { id: 'guru-reset', label: 'Reset', icon: 'refresh-ccw' }
+        { id: 'guru-reset', label: 'Reset', icon: 'refresh-ccw' },
+        { id: 'guru-spreadsheet', label: 'Spreadsheet', icon: 'file-spreadsheet' }
       ]
     };
 
@@ -1882,7 +1883,7 @@ FORMAT KELUARAN (satu baris per murid):
         const isActive = selectedSubNav === item.id;
         const btn = document.createElement('button');
         btn.id = `sub-btn-${item.id}`;
-        btn.onclick = () => setSubNav(item.id);
+        btn.onclick = () => item.id === 'guru-spreadsheet' ? bukaSpreadsheet() : setSubNav(item.id);
         btn.className = `w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium transition-all duration-150 ${isActive ? "bg-indigo-50 text-indigo-700 shadow-sm font-semibold" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"}`;
         btn.innerHTML = `<i data-lucide="${item.icon}" class="w-5 h-5"></i> <span>${item.label}</span>`;
         container.appendChild(btn);
@@ -3625,6 +3626,40 @@ if (!entry) {
       updatePengaturanGuruOnBackend();
       document.getElementById('cfg-pass-old').value = '';
       document.getElementById('cfg-pass-new').value = '';
+    }
+
+    // ============================================================
+    // SPREADSHEET (GURU) — satu klik langsung membuka spreadsheet
+    // GANTI tautan di bawah dengan URL Google Spreadsheet Anda
+    // ============================================================
+    let spreadsheetUrlCache = '';
+
+    function bukaSpreadsheet() {
+      const sidebar = document.getElementById('sidebar-container');
+      if (!sidebar.classList.contains('-translate-x-full') && window.innerWidth < 768) toggleSidebar();
+
+      if (!isGAS) { showToast('[Demo] Tidak terhubung ke spreadsheet.', 'warning'); return; }
+
+      // Sudah pernah diambil: langsung buka
+      if (spreadsheetUrlCache) { window.open(spreadsheetUrlCache, '_blank'); return; }
+
+      // Buka tab kosong dulu (agar tidak diblokir popup), lalu arahkan setelah tautan didapat
+      const win = window.open('', '_blank');
+      google.script.run
+        .withSuccessHandler(res => {
+          if (res && res.success && res.url) {
+            spreadsheetUrlCache = res.url;
+            if (win) win.location.href = res.url; else window.open(res.url, '_blank');
+          } else {
+            if (win) win.close();
+            showToast((res && res.error) ? res.error : 'Gagal mengambil tautan spreadsheet.', 'error');
+          }
+        })
+        .withFailureHandler(err => {
+          if (win) win.close();
+          showToast('Gagal: ' + (err && err.message ? err.message : 'Terjadi kesalahan.'), 'error');
+        })
+        .getSpreadsheetUrl();
     }
 
     // ============================================================
@@ -5597,7 +5632,8 @@ renderList(listEsaiEl, belumEsai, 'sky');
         const waUrl = isMobile
           ? `whatsapp://send?text=${encodeURIComponent(pesan)}`
           : `https://web.whatsapp.com/send?text=${encodeURIComponent(pesan)}`;
-        window.location.href = waUrl;
+        const waWin = window.open(waUrl, '_blank', 'noopener');
+        if (!waWin && !isMobile) throw new Error('Popup diblokir');
         showToast('Membuka WhatsApp...', 'success');
         return;
       } catch (err) {
@@ -5634,7 +5670,7 @@ renderList(listEsaiEl, belumEsai, 'sky');
           document.body.removeChild(ta);
         }
       } finally {
-        setTimeout(() => { suppressAntiCheatBlur = false; }, 1000);
+        setTimeout(() => { suppressAntiCheatBlur = false; }, 3000);
       }
     }
 
@@ -5793,7 +5829,7 @@ renderList(listEsaiEl, belumEsai, 'sky');
       const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'][d.getDay()];
       const p2 = n => String(n).padStart(2, '0');
       const ms = String(d.getMilliseconds()).padStart(3, '0');
-      return `(${hari}, ${p2(d.getDate())}-${p2(d.getMonth() + 1)}-${d.getFullYear()} ${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}:${ms})`;
+      return `(${hari}, ${p2(d.getDate())}-${p2(d.getMonth() + 1)}-${d.getFullYear()} ${p2(d.getHours())}.${p2(d.getMinutes())}.${p2(d.getSeconds())}.${ms})`;
     }
 
     // FIX: Escape karakter HTML khusus (&, <, >, ", ') pada teks yang disisipkan
