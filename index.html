@@ -1352,7 +1352,7 @@ FORMAT KELUARAN (satu baris per murid):
     // GANTI URL DI BAWAH INI dengan URL deployment Apps Script Anda
     // (hasil dari Deploy > Manage deployments, yang diakhiri /exec)
     // ============================================================
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzr2_J3ZIu4UxXIxirErg8r0dtvLKKK9K8FDRGa71wljOxDpETxOLn5P1LUMvBRDuLz/exec';
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwfJR4GvFtqvY4zBqZ-VODuC1GjC7aNsAdnD5HI0c5iydxfCA8MfXrnTXap0pKtxfIF/exec';
 
     // ============================================================
     // SYNC OVERLAY — loading modern saat kirim/ambil data Spreadsheet
@@ -2667,8 +2667,8 @@ FORMAT KELUARAN (satu baris per murid):
     }
 
     function checkKunciWarning() {
-      const numQu    function checkKunciWarning() {
-      renderSoalPGPreviewGuru();estions = appData.config.jumlahSoal || 5;
+      renderSoalPGPreviewGuru();
+      const numQuestions = appData.config.jumlahSoal || 5;
       const emptyNums = [];
       for (let i = 1; i <= numQuestions; i++) {
         if (!pgKeyMatrixState[i] || pgKeyMatrixState[i].length === 0) emptyNums.push(i);
