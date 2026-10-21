@@ -1352,7 +1352,7 @@ FORMAT KELUARAN (satu baris per murid):
     // GANTI URL DI BAWAH INI dengan URL deployment Apps Script Anda
     // (hasil dari Deploy > Manage deployments, yang diakhiri /exec)
     // ============================================================
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwfJR4GvFtqvY4zBqZ-VODuC1GjC7aNsAdnD5HI0c5iydxfCA8MfXrnTXap0pKtxfIF/exec';
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzjPy34l_eOs21LOeQEz9P6U829aB2G4ivRzXneOOC9MbcM-gmVX0mgVXKNCSCQlEan/exec';
 
     // ============================================================
     // SYNC OVERLAY — loading modern saat kirim/ambil data Spreadsheet
@@ -2992,6 +2992,8 @@ FORMAT KELUARAN (satu baris per murid):
       autoExpandTextarea(input);
       drawEssayQuestionsList();
       showToast('1 soal berhasil ditambahkan.', 'success');
+      // Sekalian simpan agar tidak terlupa
+      saveEssayConfig(null, true);
     }
 
     // Tambah banyak soal sekaligus, dipisah dengan ";;" atau "..." (titik 3 atau lebih)
@@ -3007,6 +3009,8 @@ FORMAT KELUARAN (satu baris per murid):
       autoExpandTextarea(input);
       drawEssayQuestionsList();
       showToast(`${parts.length} soal berhasil ditambahkan sekaligus.`, 'success');
+      // Sekalian simpan agar tidak terlupa
+      saveEssayConfig(null, true);
     }
 
     function removeEssayQuestion(index) {
@@ -3081,7 +3085,7 @@ FORMAT KELUARAN (satu baris per murid):
     // ============================================================
     // FIX: saveEssayConfig — sekarang juga menyimpan Mata Pelajaran Esai
     // ============================================================
-    function saveEssayConfig(event) {
+    function saveEssayConfig(event, langsung = false) {
       const mapelEsaiVal = document.getElementById('config-mapel-esai') ? document.getElementById('config-mapel-esai').value.trim() : '';
       if (!mapelEsaiVal) {
         showToast('Nama Mata Pelajaran Esai belum diisi!', 'warning');
@@ -3091,10 +3095,15 @@ FORMAT KELUARAN (satu baris per murid):
       appData.config.teksBacaan = document.getElementById('config-esai-stimulus').value;
       appData.config.mapelEsai = mapelEsaiVal;
       updateMapelDisplays();
-      triggerCustomModal("Simpan Soal & Mata Pelajaran", "Perbarui konfigurasi soal esai dan mata pelajaran?", "save", () => {
+      const eksekusiSimpan = () => {
         applyWaktuSoalSebelumSimpan('esai');
         updatePengaturanGuruOnBackend();
-      });
+      };
+      if (langsung) {
+        eksekusiSimpan();
+      } else {
+        triggerCustomModal("Simpan Soal & Mata Pelajaran", "Perbarui konfigurasi soal esai dan mata pelajaran?", "save", eksekusiSimpan);
+      }
     }
 
     // ============================================================
@@ -3870,8 +3879,10 @@ if (!entry) {
       if (benarEl) benarEl.value = appData.config.bobotBenar;
 
       drawPGKeyMatrix();
-      const tanpaKunci = list.filter(q => !q.kunci || q.kunci.length === 0).length;
-      showToast(`${list.length} soal dimuat${tanpaKunci ? `, ${tanpaKunci} belum ada kunci (**)` : ''}. Klik Simpan untuk menyimpan.`, tanpaKunci ? 'warning' : 'success');
+      // Sekalian jalankan tombol Simpan agar tidak terlupa.
+      // Jika ada soal tanpa kunci, savePGKeyMatrix otomatis menampilkan dialog konfirmasi.
+      // Jika Mata Pelajaran PG belum diisi, muncul peringatan dan penyimpanan dibatalkan.
+      savePGKeyMatrix();
     }
 
     function hapusSemuaSoalPG() {
